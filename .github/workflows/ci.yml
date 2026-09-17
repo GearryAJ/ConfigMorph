@@ -10,9 +10,6 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      FCS_DATA_DIR: ${{ runner.temp }}/convert-in-data
-      FCS_WORKSPACE_DIR: ${{ runner.temp }}/convert-in-workspace
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -21,10 +18,13 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e ".[test]"
+      - name: Configure temporary runtime
+        run: |
+          echo "FCS_DATA_DIR=${{ runner.temp }}/convert-in-data" >> "$GITHUB_ENV"
+          echo "FCS_WORKSPACE_DIR=${{ runner.temp }}/convert-in-workspace" >> "$GITHUB_ENV"
+          mkdir -p "${{ runner.temp }}/convert-in-data" "${{ runner.temp }}/convert-in-workspace"
       - name: Compile Python
         run: python -m compileall -q app
-      - name: Create temporary runtime directories
-        run: mkdir -p "$FCS_DATA_DIR" "$FCS_WORKSPACE_DIR"
       - name: Apply database migrations
         run: alembic upgrade head
       - name: Test
