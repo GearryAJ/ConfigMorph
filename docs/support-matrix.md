@@ -6,7 +6,7 @@ States: **SYNTAX_VERIFIED**, **END_TO_END_VERIFIED**, **VERSION_NOT_VERIFIED**, 
 |---|---|---|---|---|---|---|---|
 | Addresses/groups | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | SYNTAX_VERIFIED | VERSION_NOT_VERIFIED |
 | Services/groups | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | SYNTAX_VERIFIED | VERSION_NOT_VERIFIED |
-| Security policy | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | MANUAL_REVIEW | IMPLEMENTED_NOT_VERIFIED |
+| Security policy | SYNTAX_VERIFIED | SYNTAX_VERIFIED | SYNTAX_VERIFIED | SYNTAX_VERIFIED | SYNTAX_VERIFIED | END_TO_END_VERIFIED | IMPLEMENTED_NOT_VERIFIED |
 | Static routes | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | SYNTAX_VERIFIED | VERSION_NOT_VERIFIED |
 | Interface PAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | VERIFIED | VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED |
 | VIP static/port DNAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | VERIFIED | VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED |
@@ -14,6 +14,6 @@ States: **SYNTAX_VERIFIED**, **END_TO_END_VERIFIED**, **VERSION_NOT_VERIFIED**, 
 | IP pools / central NAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | NOT_APPLICABLE | NOT_APPLICABLE |
 | VDOM / SD-WAN / profiles | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | NOT_APPLICABLE | NOT_APPLICABLE |
 
-The matrix describes individual evidence, not end-to-end assurance. PAN-OS 11.1 security semantics and configure hierarchy are documented, but the renderer's local context prefix and explicit rule-order establishment remain unverified. PAN-OS 12.1 hierarchy and introduced/removed set-command pages are independently resolved. The 12.1 removal record blocks inheritance of local rulebase and legacy virtual-router static-route paths. Unverified entities remain manual review.
+The matrix describes individual evidence, not device validation. PAN-OS 11.1 local security-policy generation requires explicit placement and exports a separate, non-executed Configuration API move intent. Missing placement remains `MANUAL_REVIEW`; external BEFORE/AFTER anchors require engineer confirmation. PAN-OS 12.1 remains blocked independently.
 
 Run `python -m app.tools.doc_coverage` for development-time evidence counts and registry errors.

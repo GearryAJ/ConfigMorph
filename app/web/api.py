@@ -149,12 +149,15 @@ def migration_render(project_id:str):
     if errors: report.errors.extend(errors)
     candidate="\n".join(lines)+("\n" if lines else "")
     (root/"candidate-pan-os.set").write_text(candidate or "",encoding="utf-8"); (root/"migration-report.json").write_text(report.model_dump_json(indent=2),encoding="utf-8")
+    ordering=getattr(renderer,"ordering_plan",None); ordering_path=root/"security-rule-ordering.json"
+    if ordering: ordering_path.write_text(ordering.model_dump_json(indent=2),encoding="utf-8")
+    elif ordering_path.exists(): ordering_path.unlink()
     cfg,_,_=_migration(project_id); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root)); _persist_current_review(root,review)
     status="BLOCKED" if report.errors else "REVIEW_REQUIRED" if report.manual_review or report.unsupported or report.partial else "CANDIDATE"
     return {"status":status,"generated_lines":len(lines),"generated_entities":report.generated_entities,"skipped_entities":report.skipped_entities,"manual_review":report.manual_review,"unsupported":report.unsupported,"candidate_path":"migration/candidate-pan-os.set","report":report,"candidate":candidate}
 
 def _current_review(project_id):
-    cfg,mappings,root=_migration(project_id); plan=MigrationPlanner().plan(cfg,mappings); renderer=PaloAltoRenderer(); lines,report=renderer.render(plan) if not plan.blocked else ([],build_report(plan)); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root)); _persist_current_review(root,review)
+    cfg,mappings,root=_migration(project_id); source_version,target_version=_versions(project_id); plan=MigrationPlanner().plan(cfg,mappings,source_version,target_version); renderer=PaloAltoRenderer(); lines,report=renderer.render(plan) if not plan.blocked else ([],build_report(plan)); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root)); _persist_current_review(root,review)
     return cfg,mappings,root,plan,lines,report,review
 
 def _persist_current_review(root,review):
@@ -197,7 +200,7 @@ def run_migration_validation(project_id:str):
 def migration_review_package(project_id:str):
     cfg,mappings,root,plan,lines,report,review=_current_review(project_id); validation=validate_migration(cfg,plan,review,lines)
     if validation.status=="BLOCKING": raise HTTPException(409,"Final review package blocked by validation; candidate remains available")
-    data=export_package("\n".join(lines)+("\n" if lines else ""),report.model_dump(mode="json"),review,validation,mappings)
+    data=export_package("\n".join(lines)+("\n" if lines else ""),report.model_dump(mode="json"),review,validation,mappings,report.security_rule_ordering)
     return Response(data,media_type="application/zip",headers={"Content-Disposition":'attachment; filename="migration-review-package.zip"'})
 
 @router.get("/projects/{project_id}/migration/report")

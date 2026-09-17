@@ -10,7 +10,7 @@ FortiGate scope and limitations are documented in [fortigate-to-pan.md](fortigat
 
 ## ASA to PAN-OS scope
 
-The PAN-OS renderer emits deterministic set commands for validated host/network/range/FQDN addresses, static address groups, normalized TCP/UDP destination-port services, static service groups, security rules with explicit mapped zones, and simple static routes. It preserves policy order, disabled state, allow/deny, descriptions, `log-start`, and `log-end`. PAN built-ins `any`, `application-default`, `service-http`, and `service-https` are reused.
+For PAN-OS 11.1 local firewalls, the renderer emits set commands for validated objects, services, security-rule fields, and simple static routes. Security rules require explicit target placement. Their source-effective order is preserved in a separate `security-rule-ordering.json` intent artifact using the documented Configuration API move mechanism. The artifact is not CLI syntax, is not executed, and requires engineer review.
 
 ASA `access-group` attachment, direction, ACL order/remarks, source-port constraints, and protocol fidelity are retained. Inbound ingress context comes from the attachment. Destination context is derived only by connected/static-route longest-prefix matching; evidence appears in compatibility output. Unattached, outbound, any-destination, multi-zone, unresolved, and ambiguous policies remain review-only. Interfaces are mapping-only. Zone creation is not automatic.
 
@@ -32,6 +32,7 @@ Generated files are always **Candidate Configuration — Engineer Review Require
 - `migration/migration-report.json`
 - `migration/compatibility.json`
 - `migration/mappings.json`
+- `migration/security-rule-ordering.json` when security rules are generated
 
 Review all manual-review/unsupported findings, mappings, normalized parser warnings, names, command references, topology, and behavior on an isolated PAN-OS lab system before any separate deployment process. This application has no deployment capability.
 

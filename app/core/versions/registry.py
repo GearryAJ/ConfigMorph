@@ -5,15 +5,17 @@ def _cap(refs,status=S.DOCUMENTED_IMPLEMENTED_TESTED,limitation=None): return Ca
 PROFILES={}
 for family in ("9.20","9.22","9.24"):
     ref=f"ASA-{family}-GENERAL"; PROFILES[f"asa-{family}"]=VersionProfile(id=f"asa-{family}",vendor=Vendor.ASA,os_name="Cisco ASA",version_family=family,documentation_refs=[ref],capabilities={x:_cap([ref],S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED) for x in ("address","address_group","service","service_group","security_policy","route","static_source_nat","dynamic_pat")})
+    PROFILES[f"asa-{family}"].capabilities["security_policy"]=_cap([f"ASA-{family}-FIREWALL"])
 for family in ("7.4","7.6"):
     vip=f"FORTIOS-{family}-STATIC-VIP"; snat=f"FORTIOS-{family}-DYNAMIC-SNAT"
     caps={x:_cap([],S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED) for x in ("address","address_group","service","service_group","security_policy","route")}
     caps.update({"destination_nat":_cap([vip]),"dynamic_pat":_cap([snat]),"ip_pool":_cap([snat],S.DOCUMENTED_NOT_IMPLEMENTED),"central_nat":_cap([snat],S.DOCUMENTED_NOT_IMPLEMENTED),"vdom":_cap([],S.DOCUMENTED_NOT_IMPLEMENTED),"sdwan":_cap([],S.DOCUMENTED_NOT_IMPLEMENTED),"security_profiles":_cap([],S.DOCUMENTED_NOT_IMPLEMENTED)})
+    caps["security_policy"]=_cap([f"FORTIOS-{family}-FIREWALL-POLICY-CLI"])
     PROFILES[f"fortios-{family}"]=VersionProfile(id=f"fortios-{family}",vendor=Vendor.FORTIGATE,os_name="FortiOS",version_family=family,documentation_refs=[vip,snat],capabilities=caps,tested=True,known_limitations=["Central NAT, IP pools, VDOM, SD-WAN, security profiles, and advanced VIPs require manual review."])
 for family in ("11.1","12.1"):
     refs=[f"PANOS-{family}-SECURITY-POLICY"] if family=="11.1" else []
     caps={x:_cap([],S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED) for x in ("address","address_group","service","service_group","route","static_source_nat","dynamic_pat","destination_nat")}
-    caps["security_policy"]=_cap(refs,S.DOCUMENTED_IMPLEMENTED_TESTED if refs else S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED)
+    caps["security_policy"]=_cap(refs+["PANOS-11.1-CONFIG-API-ACTIONS"] if refs else [],S.DOCUMENTED_IMPLEMENTED_TESTED if refs else S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED)
     if family=="11.1":
         cli="PANOS-11.1-CONFIGURE-CLI-HIERARCHY"
         for name in ("address","address_group","service","service_group","route"):

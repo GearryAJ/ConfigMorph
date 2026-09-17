@@ -56,12 +56,14 @@ class MigrationPlanner:
             missing=[m for m in x.members if m not in by_name]
             if missing or x.id in cycles: add(x,"service_group",S.MANUAL_REVIEW,None,"Group dependency is unresolved or cyclic.")
             else: add(x,"service_group",S.SUPPORTED,{"members":[targets[by_name[m].id] for m in x.members]})
+        policy_positions=[x.position for x in cfg.security_policies]
+        duplicate_positions=len(policy_positions)!=len(set(policy_positions))
         for x in sorted(cfg.security_policies,key=lambda p:p.position):
             topology=x.vendor_extensions.get("topology",{})
             required=[f"zone:{z}" for z in x.source_zones+x.destination_zones if z not in zone_maps]
             refs=x.sources+x.destinations+x.services; missing=[r for r in refs if r.lower() not in {"any","any4","any6","application-default","service-http","service-https"} and r not in by_name]
             profiles=x.vendor_extensions.get("security_profiles",[])
-            if target_profile and target_profile.version_family=="11.1": add(x,"security_policy",S.MANUAL_REVIEW,None,"Target field syntax is verified; deterministic rule ordering is not verified.",topology=topology)
+            if duplicate_positions: add(x,"security_policy",S.MANUAL_REVIEW,None,"Source effective policy order is ambiguous: duplicate positions.",topology=topology)
             elif x.vendor_extensions.get("manual_review"): add(x,"security_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"],topology=topology)
             elif profiles: add(x,"security_policy",S.MANUAL_REVIEW,None,f"Security profiles are preserved for review and not migrated: {', '.join(profiles)}",required=required,topology=topology)
             elif x.vendor_extensions.get("attached") is False: add(x,"security_policy",S.MANUAL_REVIEW,None,"ACL is not attached and is not proven active.",topology=topology)
@@ -70,6 +72,8 @@ class MigrationPlanner:
             elif not x.source_zones or not x.destination_zones: add(x,"security_policy",S.MANUAL_REVIEW,None,topology.get("reason") or "Normalized rule has no explicit source/destination zones.",required=["source_zone","destination_zone"],topology=topology)
             elif required: add(x,"security_policy",S.MANUAL_REVIEW,None,"Confirmed zone mapping is required.",required=required,topology=topology)
             elif x.action not in {"allow","deny"}: add(x,"security_policy",S.UNSUPPORTED,None,f"Action {x.action} is not safely implemented.")
+            elif not mappings.security_rule_placement: add(x,"security_policy",S.MANUAL_REVIEW,None,"Explicit target security-rule placement is required.",topology=topology)
+            elif target_profile and target_profile.version_family!="11.1": add(x,"security_policy",S.MANUAL_REVIEW,None,"Security policy generation is limited to PAN-OS 11.1.",topology=topology)
             else:
                 resolve=lambda values:[v if v.lower() in {"any","application-default","service-http","service-https"} else targets[by_name[v].id] for v in values]
                 add(x,"security_policy",S.SUPPORTED,{"from":[zone_maps[z] for z in x.source_zones],"to":[zone_maps[z] for z in x.destination_zones],"source":resolve(x.sources),"destination":resolve(x.destinations),"service":resolve(x.services),"action":x.action,"enabled":x.enabled,"description":x.description,"log_start":x.log_start,"log_end":x.log_end,"position":x.position},topology=topology)
@@ -95,6 +99,7 @@ class MigrationPlanner:
             else: add(x,"route",S.SUPPORTED,{"destination":x.destination,"next_hop":x.next_hop,"interface":mapping.target_interface if mapping else None,"virtual_router":mappings.virtual_router,"metric":x.metric})
         for x in cfg.vpn_objects: add(x,"vpn",S.UNSUPPORTED,None,"VPN migration is outside Phase F scope.")
         advisories=[f"Analysis: {x.description}" for x in analysis.findings if x.type=="POTENTIAL_SHADOWING"]
+        if mappings.security_rule_placement and mappings.security_rule_placement.anchor_rule: advisories.append(f"External target dependency: confirm security rule anchor {mappings.security_rule_placement.anchor_rule!r} exists before executing ordering actions.")
         for x in cfg.unparsed_constructs: advisories.append(f"Preserved unparsed {source.value} construct at line {x.line_number}: {x.reason}")
         blocked=[x.message for x in cfg.warnings if x.severity==Severity.ERROR]
         if not source_profile: advisories.append("Source version not verified. Select a verified source OS version before candidate generation.")

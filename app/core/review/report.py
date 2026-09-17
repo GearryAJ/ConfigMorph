@@ -20,8 +20,9 @@ def human_report(review,validation,mappings):
     sections.extend(["Validation Results",f"Application-level validation: {validation.status}\n"+"\n".join(f"- {x.severity} {x.code}: {x.message}" for x in validation.findings),"Engineer Review Decisions","\n".join(f"- {x.source_name}: {x.review_status} {x.note}" for x in review.items if x.review_status!="NOT_REVIEWED") or "None","Known Limitations","Candidate only. Engineer review required. Not validated by PAN-OS. No deployment capability. Advanced NAT and IPv6 topology remain review-only."])
     return "\n\n".join(f"## {x}" if i%2==0 else x for i,x in enumerate(sections))+"\n"
 
-def export_package(candidate,report,review,validation,mappings):
-    files={"candidate-pan-os.set":candidate,"migration-report.json":json.dumps(report,indent=2,default=str),"review-report.json":review.model_dump_json(indent=2),"validation-report.json":validation.model_dump_json(indent=2),"mappings.json":mappings.model_dump_json(indent=2),"README.txt":"CANDIDATE CONFIGURATION ONLY\nEngineer review required. Application-level validation is not PAN-OS/device validation. No source configuration is included.\n","migration-report.md":human_report(review,validation,mappings)}
+def export_package(candidate,report,review,validation,mappings,ordering_plan=None):
+    files={"candidate-pan-os.set":candidate,"migration-report.json":json.dumps(report,indent=2,default=str),"review-report.json":review.model_dump_json(indent=2),"validation-report.json":validation.model_dump_json(indent=2),"mappings.json":mappings.model_dump_json(indent=2),"README.txt":"CANDIDATE CONFIGURATION ONLY\nEngineer review required. Application-level validation is not PAN-OS/device validation. Security-rule ordering is separate intent and is not executed. No source configuration is included.\n","migration-report.md":human_report(review,validation,mappings)}
+    if ordering_plan: files["security-rule-ordering.json"]=ordering_plan.model_dump_json(indent=2) if hasattr(ordering_plan,"model_dump_json") else json.dumps(ordering_plan,indent=2,default=str)
     output=io.BytesIO()
     with zipfile.ZipFile(output,"w",zipfile.ZIP_DEFLATED) as archive:
         for name,value in files.items(): archive.writestr(name,value)

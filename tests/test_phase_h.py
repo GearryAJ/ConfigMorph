@@ -54,7 +54,7 @@ def test_review_api_persistence_invalidation_validation_and_package():
     assert client.put(base+f"/review/{item['id']}",json={**update,"semantic_hash":"stale"}).status_code==409
     assert client.get(base+f"/review/{item['id']}").json()["review_status"]=="NEEDS_CHANGES"
     validation=client.post(base+"/validate"); assert validation.status_code==200 and client.get(base+"/validation").status_code==200
-    package=client.get(base+"/review-package"); assert package.status_code==409
+    package=client.get(base+"/review-package"); assert package.status_code==200
 
 def test_review_generation_2000_entities_linear_smoke():
     started=time.perf_counter(); *_,review=reviewed(config(1000),mapped())
