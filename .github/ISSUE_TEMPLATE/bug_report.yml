@@ -1,0 +1,36 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "**Do not attach production firewall configurations or sensitive data.** Use a minimal sanitized reproducer with synthetic addresses and names."
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Minimal sanitized steps/configuration and exact error output.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Convert-In version
+    validations:
+      required: true
+  - type: dropdown
+    id: sanitized
+    attributes:
+      label: Data safety confirmation
+      options:
+        - I confirm this report contains only synthetic/sanitized data and no secrets.
+    validations:
+      required: true

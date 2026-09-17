@@ -1,0 +1,13 @@
+set vsys vsys1 address WEB1 ip-netmask 10.0.1.10/32
+set vsys vsys1 address WEB_NET ip-netmask 10.0.1.0/24
+set vsys vsys1 address-group WEB_SERVERS static WEB1
+set vsys vsys1 service HTTPS protocol tcp port 443
+set vsys vsys1 rulebase nat rules NAT-001 from trust
+set vsys vsys1 rulebase nat rules NAT-001 to untrust
+set vsys vsys1 rulebase nat rules NAT-001 source WEB1
+set vsys vsys1 rulebase nat rules NAT-001 destination any
+set vsys vsys1 rulebase nat rules NAT-001 service any
+set vsys vsys1 rulebase nat rules NAT-001 source-translation static-ip translated-address 192.0.2.10
+set network virtual-router default routing-table ip static-route route_0.0.0.0_0 destination 0.0.0.0/0
+set network virtual-router default routing-table ip static-route route_0.0.0.0_0 nexthop ip-address 192.0.2.1
+set network virtual-router default routing-table ip static-route route_0.0.0.0_0 interface ethernet1/1

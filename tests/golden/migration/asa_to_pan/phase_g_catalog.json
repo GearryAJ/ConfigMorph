@@ -1,0 +1,14 @@
+{
+  "01_addresses": {"semantic": "host/network/range preserved", "compatibility": "SUPPORTED", "pan": "address"},
+  "02_groups": {"semantic": "recursive members preserved", "compatibility": "SUPPORTED", "pan": "address-group"},
+  "03_services": {"semantic": "protocol and destination ports preserved", "compatibility": "SUPPORTED", "pan": "service"},
+  "04_basic_policy": {"semantic": "attached inbound ACL with resolved zones", "compatibility": "SUPPORTED", "pan": "security rules"},
+  "05_multiple_policies_order": {"semantic": "ACL line order preserved", "compatibility": "SUPPORTED", "pan": "ordered security rules"},
+  "06_static_nat": {"semantic": "object static source NAT", "compatibility": "SUPPORTED", "pan": "static-ip"},
+  "07_dynamic_pat": {"semantic": "object interface PAT", "compatibility": "SUPPORTED", "pan": "dynamic-ip-and-port interface-address"},
+  "08_destination_nat": {"semantic": "manual destination tuple preserved", "compatibility": "MANUAL_REVIEW", "reason": "twice NAT rendering intentionally blocked"},
+  "09_static_route": {"semantic": "longest-prefix static route", "compatibility": "SUPPORTED", "pan": "static-route"},
+  "10_manual_review_twice_nat": {"semantic": "source/destination/service tuples and section preserved", "compatibility": "MANUAL_REVIEW", "reason": "twice NAT rendering intentionally blocked"},
+  "11_unresolved_reference": {"semantic": "missing reference retained", "compatibility": "MANUAL_REVIEW", "reason": "unresolved reference"},
+  "12_name_collision": {"semantic": "deterministic suffix", "compatibility": "SUPPORTED", "pan": "normalized unique names"}
+}

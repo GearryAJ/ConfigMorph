@@ -1,0 +1,35 @@
+name: Vendor parser support request
+description: Request parser coverage or report a parser gap
+title: "[Parser]: "
+labels: [parser]
+body:
+  - type: markdown
+    attributes:
+      value: "**Never attach a production firewall configuration.** Provide only the smallest sanitized synthetic reproducer. Remove hostnames, public/customer IPs, usernames, keys, community strings, certificates, and secrets."
+  - type: input
+    id: vendor
+    attributes:
+      label: Vendor and platform/version
+    validations:
+      required: true
+  - type: textarea
+    id: syntax
+    attributes:
+      label: Minimal sanitized syntax
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: semantics
+    attributes:
+      label: Expected normalized semantics
+    validations:
+      required: true
+  - type: dropdown
+    id: sanitized
+    attributes:
+      label: Data safety confirmation
+      options:
+        - I confirm this reproducer is synthetic/sanitized and contains no secrets.
+    validations:
+      required: true

@@ -1,0 +1,1 @@
+from .registry import detect_vendor, parse_config

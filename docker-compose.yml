@@ -1,0 +1,19 @@
+services:
+  firewall-config-studio:
+    build:
+      context: .
+      secrets:
+        - corporate_ca
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./data:/app/data
+      - ./workspace:/app/workspace
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+secrets:
+  corporate_ca:
+    file: ${CORPORATE_CA_FILE:-./certs/empty.crt}

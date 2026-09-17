@@ -1,0 +1,11 @@
+{
+  "counts": {"addresses": 2, "groups": 1, "services": 1, "interfaces": 2, "zones": 2, "policies": 1, "nat": 1, "routes": 1},
+  "interface_names": ["GigabitEthernet0/0", "GigabitEthernet0/1"],
+  "zone_names": ["inside", "outside"],
+  "address_names": ["WEB1", "WEB_NET"],
+  "group_names": ["WEB_SERVERS"],
+  "service_names": ["HTTPS"],
+  "policy_actions": ["allow"],
+  "nat_types": ["static_source_nat"],
+  "route_destinations": ["0.0.0.0/0"]
+}

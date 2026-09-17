@@ -1,0 +1,11 @@
+{
+  "counts": {"addresses": 1, "groups": 1, "services": 1, "interfaces": 2, "zones": 1, "policies": 1, "nat": 2, "routes": 1},
+  "interface_names": ["port1", "port2"],
+  "zone_names": ["inside"],
+  "address_names": ["WEB1"],
+  "group_names": ["WEB_SERVERS"],
+  "service_names": ["HTTPS"],
+  "policy_actions": ["allow"],
+  "nat_types": ["destination_nat", "dynamic_pat"],
+  "route_destinations": ["0.0.0.0/0"]
+}

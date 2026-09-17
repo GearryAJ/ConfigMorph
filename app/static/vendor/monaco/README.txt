@@ -1,0 +1,1 @@
+Monaco bundle intentionally deferred until release asset packaging. Native editor used; no remote fallback.
