@@ -3,6 +3,7 @@ import shlex
 from app.core.models import (Address, FirewallConfig, Interface, NatRule, ParseIssue,
     Provenance, SecurityRule, Service, Severity, StaticRoute, UnparsedConstruct, Vendor, Zone)
 from app.core.parsing.base import DetectionResult
+from app.core.versions import detect_version
 
 
 class FortiGateParser:
@@ -22,7 +23,7 @@ class FortiGateParser:
     def validate_input(self, text: str):
         return [] if text.strip() else [ParseIssue(severity=Severity.ERROR, vendor=self.vendor, message="Configuration is empty")]
     def parse(self, text: str) -> FirewallConfig:
-        lines = text.splitlines(); lowered=text.lower(); cfg = FirewallConfig(metadata={"source_vendor": self.vendor,"central_nat": "set central-nat enable" in lowered,"vdom_present": "config vdom" in lowered,"sdwan_present": "config system sdwan" in lowered or "virtual-wan-link" in lowered}); cfg.warnings.extend(self.validate_input(text)); stack=[]; item=None
+        lines = text.splitlines(); lowered=text.lower(); version=detect_version(text,self.vendor); cfg = FirewallConfig(metadata={"source_vendor": self.vendor,"version_detection":version.model_dump(mode="json"),"central_nat": "set central-nat enable" in lowered,"vdom_present": "config vdom" in lowered,"sdwan_present": "config system sdwan" in lowered or "virtual-wan-link" in lowered}); cfg.warnings.extend(self.validate_input(text)); stack=[]; item=None
         for number, raw in enumerate(lines, 1):
             line = raw.strip()
             if not line or line.startswith("#"): continue

@@ -15,11 +15,13 @@ from app.core.migration import MigrationMappings, MigrationPlanner, build_report
 from app.core.renderers import PaloAltoRenderer
 from app.core.migration.validation import validate_candidate
 from app.core.review import ReviewDecision,build_review,export_package,load_decisions,save_decisions,validate_migration
+from app.core.versions import resolve_context
+from app.core.versions.models import VersionContext
 
 router = APIRouter(prefix="/api")
 
 @router.post("/analyze", response_class=HTMLResponse)
-def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_vendor: str = Form(...)):
+def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_vendor: str = Form(...), source_version: str|None = Form(None), target_version: str|None = Form(None)):
     size = len(source.encode("utf-8"))
     if size > settings.max_input_bytes: raise HTTPException(413, "Configuration exceeds 5 MiB limit")
     if target_vendor not in {Vendor.PALO_ALTO.value, Vendor.FORTIGATE.value}: raise HTTPException(400, "Unsupported target vendor")
@@ -37,6 +39,8 @@ def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_v
     (root / "source.cfg").write_text(source, encoding="utf-8")
     (root / "normalized.json").write_text(cfg.model_dump_json(indent=2), encoding="utf-8")
     (root / "analysis.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    versions={"source":resolve_context(source,vendor,source_version).model_dump(mode="json"),"target":resolve_context("",Vendor.PALO_ALTO,target_version).model_dump(mode="json")}
+    (root/"versions.json").write_text(json.dumps(versions,indent=2),encoding="utf-8")
     create_project(project, vendor.value, target_vendor, str(Path(project) / "source.cfg"), len(cfg.warnings))
     critical = sum(x.severity is Severity.ERROR for x in cfg.warnings)
     summary = {"policies": len(cfg.security_policies), "objects": len(cfg.addresses)+len(cfg.address_groups)+len(cfg.services)+len(cfg.service_groups), "nat": len(cfg.nat_policies), "interfaces": len(cfg.interfaces), "routes": len(cfg.static_routes), "issues": len(cfg.warnings), "findings": report.counts.total_findings}
@@ -111,6 +115,11 @@ def _migration(project_id):
     mappings=MigrationMappings.model_validate_json(path.read_text(encoding="utf-8")) if path.is_file() else default_mappings(cfg)
     return cfg,mappings,root
 
+def _versions(project_id):
+    path=settings.workspace_dir/project_id/"versions.json"
+    if not path.is_file(): return None,None
+    data=json.loads(path.read_text(encoding="utf-8")); return VersionContext.model_validate(data["source"]),VersionContext.model_validate(data["target"])
+
 @router.get("/projects/{project_id}/migration/mappings")
 def migration_mappings(project_id:str): return _migration(project_id)[1]
 
@@ -121,7 +130,7 @@ def update_migration_mappings(project_id:str,mappings:MigrationMappings):
     (root/"mappings.json").write_text(mappings.model_dump_json(indent=2),encoding="utf-8"); return mappings
 
 def _plan(project_id):
-    cfg,mappings,root=_migration(project_id); plan=MigrationPlanner().plan(cfg,mappings)
+    cfg,mappings,root=_migration(project_id); source_version,target_version=_versions(project_id); plan=MigrationPlanner().plan(cfg,mappings,source_version,target_version)
     (root/"compatibility.json").write_text(json.dumps([x.model_dump(mode="json") for x in plan.compatibility],indent=2),encoding="utf-8")
     return plan,root
 

@@ -4,6 +4,7 @@ from defusedxml.common import DefusedXmlException
 from app.core.models import (Address, FirewallConfig, Interface, NatRule, ParseIssue,
     Provenance, SecurityRule, Service, Severity, StaticRoute, UnparsedConstruct, Vendor, Zone)
 from app.core.parsing.base import DetectionResult
+from app.core.versions import detect_version
 
 
 class PaloAltoParser:
@@ -14,7 +15,7 @@ class PaloAltoParser:
     def validate_input(self, text: str):
         return [] if text.strip() else [ParseIssue(severity=Severity.ERROR,vendor=self.vendor,message="Configuration is empty")]
     def parse(self, text: str) -> FirewallConfig:
-        cfg=FirewallConfig(metadata={"source_vendor":self.vendor}); cfg.warnings.extend(self.validate_input(text))
+        version=detect_version(text,self.vendor); cfg=FirewallConfig(metadata={"source_vendor":self.vendor,"version_detection":version.model_dump(mode="json")}); cfg.warnings.extend(self.validate_input(text))
         if not text.strip(): return cfg.finalize_metrics(0)
         try: root=ET.fromstring(text)
         except (ET.ParseError,DefusedXmlException,ValueError) as exc:

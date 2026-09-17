@@ -7,6 +7,10 @@ def validate_migration(cfg,plan,review,lines):
     findings=[]
     def add(stage,severity,code,message,entity=None): findings.append(ValidationFinding(stage=stage,severity=severity,code=code,message=message,entity_id=entity))
     entities=[x for xs in (cfg.interfaces,cfg.zones,cfg.addresses,cfg.address_groups,cfg.services,cfg.service_groups,cfg.security_policies,cfg.nat_policies,cfg.static_routes,cfg.vpn_objects) for x in xs]
+    if not plan.target_version or not plan.target_version.selected_family: add("VERSION",S.BLOCKING,"TARGET_VERSION_REQUIRED","Explicit target PAN-OS version is required.")
+    if not plan.source_version or not plan.source_version.selected_family: add("VERSION",S.BLOCKING,"SOURCE_VERSION_REQUIRED","Source version is not verified; select a source OS version.")
+    if plan.source_version and plan.source_version.override: add("VERSION",S.WARNING,"SOURCE_VERSION_OVERRIDE","Source version manually overridden.")
+    if any(x.version_status!="VERIFIED" and x.status in {"EXACT","SUPPORTED","PARTIAL"} for x in plan.compatibility): add("VERSION",S.BLOCKING,"UNVERIFIED_CAPABILITY","Generated syntax lacks complete version/documentation evidence.")
     ids=[x.id for x in entities]
     if len(ids)!=len(set(ids)): add("STRUCTURAL",S.BLOCKING,"DUPLICATE_ID","Entity IDs are not globally unique.")
     for x in cfg.addresses:
@@ -43,7 +47,7 @@ def validate_migration(cfg,plan,review,lines):
     for item in review.items:
         for finding in item.analysis_findings:
             if finding["severity"]=="WARNING": add("REVIEW",S.WARNING,finding["type"],finding["description"],item.id)
-    stages={stage:_stage(findings,stage) for stage in ("STRUCTURAL","REFERENCE","MIGRATION","CANDIDATE","REVIEW")}
+    stages={stage:_stage(findings,stage) for stage in ("VERSION","STRUCTURAL","REFERENCE","MIGRATION","CANDIDATE","REVIEW")}
     status=S.BLOCKING if S.BLOCKING in stages.values() else S.WARNING if S.WARNING in stages.values() else S.PASS
     return ValidationReport(status=status,findings=findings,stages=stages)
 

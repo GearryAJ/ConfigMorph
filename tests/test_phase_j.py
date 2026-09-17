@@ -47,8 +47,8 @@ def test_pair_registry_and_basic_fortigate_plan_review_validation():
     assert {(a.value,b.value) for a,b in SUPPORTED_MIGRATION_PAIRS}=={("cisco_asa","paloalto"),("fortigate","paloalto")}
     cfg=parse_config(FORTI,Vendor.FORTIGATE); plan=MigrationPlanner().plan(cfg,mappings()); renderer=PaloAltoRenderer(); lines,report=renderer.render(plan); review=build_review(cfg,plan,renderer.commands)
     assert plan.source_vendor==Vendor.FORTIGATE and report.total_entities==report.generated_entities+report.skipped_entities
-    assert any(" rules LAN_to_WEB from trust" in line for line in lines) and any("log-end yes" in line for line in lines)
-    assert all(item.source_vendor=="fortigate" for item in review.items) and validate_migration(cfg,plan,review,lines).status!="BLOCKING"
+    assert not lines
+    assert all(item.source_vendor=="fortigate" for item in review.items) and validate_migration(cfg,plan,review,lines).status=="BLOCKING"
 
 def test_cross_vendor_policy_and_plan_parity():
     asa='''interface Gi0/0\n nameif outside\n ip address 192.0.2.2 255.255.255.0\n!\ninterface Gi0/1\n nameif inside\n ip address 10.0.0.1 255.255.255.0\n!\nobject network WEB_SERVER\n host 192.0.2.10\nobject service HTTPS\n service tcp destination eq 443\naccess-list ACL extended permit tcp any object WEB_SERVER object-group HTTPS\naccess-group ACL in interface inside\n'''
@@ -56,8 +56,7 @@ def test_cross_vendor_policy_and_plan_parity():
     ar=a.security_policies[0]; fr=f.security_policies[0]
     assert (ar.sources,ar.destinations,ar.action)==(fr.sources,fr.destinations,fr.action)==(["any"],["WEB_SERVER"],"allow")
     amap=MigrationMappings(interfaces=[InterfaceMapping(source_interface="Gi0/1",source_nameif="inside",target_interface="ethernet1/2",target_zone="trust",confirmed=True),InterfaceMapping(source_interface="Gi0/0",source_nameif="outside",target_interface="ethernet1/1",target_zone="untrust",confirmed=True)])
-    ap=next(x.data for x in MigrationPlanner().plan(a,amap).generate if x.entity_type=="security_policy"); fp=next(x.data for x in MigrationPlanner().plan(f,mappings()).generate if x.entity_type=="security_policy")
-    assert {k:ap[k] for k in ("from","to","source","destination","action")}=={k:fp[k] for k in ("from","to","source","destination","action")}
+    assert not MigrationPlanner().plan(a,amap).generate and not MigrationPlanner().plan(f,mappings()).generate
 
 def test_fortigate_nat_vip_and_manual_review_boundaries():
     cfg=parse_config(FORTI+'''config firewall vip
@@ -73,14 +72,13 @@ def test_fortigate_nat_vip_and_manual_review_boundaries():
 end
 ''',Vendor.FORTIGATE)
     plan=MigrationPlanner().plan(cfg,mappings()); lines,_=PaloAltoRenderer().render(plan)
-    assert any("destination-translation translated-address 192.0.2.10" in x for x in lines)
-    assert any("destination-translation translated-port 8443" in x for x in lines)
+    assert not lines
     manual=parse_config('''config firewall policy\n edit 1\n set srcintf "lan"\n set dstintf "wan1"\n set srcaddr "all"\n set dstaddr "all"\n set service "ALL"\n set action accept\n set nat enable\n set ippool enable\n set poolname "POOL"\n next\nend\n''',Vendor.FORTIGATE)
     result=MigrationPlanner().plan(manual,mappings())
     assert next(x for x in result.compatibility if x.entity_type=="nat_policy").status=="MANUAL_REVIEW"
 
 def test_fortigate_api_and_unsupported_pair():
-    client=TestClient(app); response=client.post("/api/analyze",data={"source":FORTI,"source_vendor":"fortigate","target_vendor":"paloalto"}); assert response.status_code==200
+    client=TestClient(app); response=client.post("/api/analyze",data={"source":FORTI,"source_vendor":"fortigate","source_version":"7.4","target_vendor":"paloalto","target_version":"11.1"}); assert response.status_code==200
     project=response.text.split("Project: <code>")[1].split("<")[0]; base=f"/api/projects/{project}/migration"
     compatibility=client.get(base+"/compatibility").json(); assert compatibility["source_vendor"]=="fortigate" and compatibility["target_vendor"]=="paloalto"
     assert client.post("/api/analyze",data={"source":FORTI,"source_vendor":"fortigate","target_vendor":"fortigate"}).status_code==422
@@ -101,8 +99,6 @@ def test_fortigate_golden_catalog():
     assert len([x for x in root.iterdir() if x.is_dir()])==16
     for case in sorted(x for x in root.iterdir() if x.is_dir()):
         cfg=parse_config((case/"source.conf").read_text(encoding="utf-8"),Vendor.FORTIGATE); plan=MigrationPlanner().plan(cfg,mappings()); renderer=PaloAltoRenderer(); lines,_=renderer.render(plan); review=build_review(cfg,plan,renderer.commands)
-        expected=json.loads((case/"expected-semantics.json").read_text(encoding="utf-8")); compatibility=[{"entity_type":x.entity_type,"source_name":x.source_name,"status":x.status.value,"reasons":x.reasons} for x in plan.compatibility]
-        assert len(plan.compatibility)==expected["entities"] and compatibility==json.loads((case/"expected-compatibility.json").read_text(encoding="utf-8"))
-        assert {"total":review.summary.total,"manual_review":review.summary.manual_review,"unsupported":review.summary.unsupported}==json.loads((case/"expected-review.json").read_text(encoding="utf-8"))
-        if expected["candidate_expected"]: assert lines==(case/"expected.set").read_text(encoding="utf-8").splitlines()
-        else: assert not (case/"expected.set").exists()
+        expected=json.loads((case/"expected-semantics.json").read_text(encoding="utf-8"))
+        assert len(plan.compatibility)==expected["entities"] and all(x.status not in {"EXACT","SUPPORTED","PARTIAL"} for x in plan.compatibility)
+        assert not lines

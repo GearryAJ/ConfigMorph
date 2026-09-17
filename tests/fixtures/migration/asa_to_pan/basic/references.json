@@ -1,0 +1,1 @@
+{"source_profile":"asa-9.20","target_profile":"panos-11.1","source_refs":["ASA-9.20-GENERAL"],"target_refs":["PANOS-11.1-SECURITY-POLICY"],"note":"General/source and security-policy target references do not verify all emitted syntax."}

@@ -26,6 +26,8 @@ node --check app/static/js/app.js
 
 Parser changes need minimal synthetic fixtures, malformed-input coverage, and updated golden normalized output where behavior intentionally changes. Renderer changes must consume normalized IR, declare compatibility limits, preserve traceability, and include deterministic golden candidate output. A new parser or renderer requires documentation of supported and unsupported semantics.
 
+Any pull request changing vendor parsing semantics, migration compatibility, or renderer behavior must include an official vendor documentation reference ID, affected OS family, synthetic fixture, and explicit expected behavior. Undocumented semantic changes are not accepted.
+
 ## Security and test data
 
 Never submit real customer configurations, customer identifiers/IP addressing, credentials, tokens, certificates, workspace data, or generated customer candidates. This applies to commits, issues, discussions, logs, and screenshots. Use documentation networks (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`) or clearly synthetic RFC1918 data. Provide the smallest sanitized reproducer.

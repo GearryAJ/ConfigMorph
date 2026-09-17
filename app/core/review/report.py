@@ -12,7 +12,8 @@ def save_decisions(root:Path,decisions):
     temp.write_text(json.dumps({k:v.model_dump(mode="json") for k,v in decisions.items()},indent=2),encoding="utf-8"); temp.replace(path)
 
 def human_report(review,validation,mappings):
-    sections=["Migration Summary",f"Source: {review.source_vendor}\nTarget: {review.target_vendor}\nEntities: {review.summary.total}\nGenerated: {review.summary.generated}","Confirmed Mappings"]
+    source=review.source_version.selected_version if review.source_version else "not selected"; target=review.target_version.selected_version if review.target_version else "not selected"
+    sections=["Migration Summary",f"Source: {review.source_vendor} {source}\nTarget: {review.target_vendor} {target}\nEntities: {review.summary.total}\nGenerated: {review.summary.generated}\nDocumentation: {', '.join(review.documentation_refs) or 'not verified'}","Confirmed Mappings"]
     sections.append("\n".join(f"{x.source_nameif or x.source_interface} -> {x.target_zone} ({x.target_interface})" for x in mappings.interfaces if x.confirmed) or "None")
     for title,predicate in (("Converted Objects",lambda x:x.entity_type in {"address","address_group","service","service_group"} and x.generated_commands),("Converted Policies",lambda x:x.entity_type=="security_policy" and x.generated_commands),("Converted NAT",lambda x:x.entity_type=="nat_policy" and x.generated_commands),("Manual Review Items",lambda x:x.compatibility_status=="MANUAL_REVIEW"),("Unsupported Items",lambda x:x.compatibility_status=="UNSUPPORTED")):
         sections.extend([title,"\n".join(f"- {x.source_name}: {', '.join(x.manual_review_reasons) or x.compatibility_status}" for x in review.items if predicate(x)) or "None"])

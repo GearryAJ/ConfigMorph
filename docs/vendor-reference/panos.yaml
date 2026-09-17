@@ -1,0 +1,3 @@
+[
+  {"id":"PANOS-11.1-SECURITY-POLICY","vendor":"paloalto","product":"PAN-OS","version_family":"11.1","document_type":"ADMIN_GUIDE","title":"Security Policy","topic":"Security rule matching, ordering, actions, and logging","official_url":"https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/policy/security-policy","verified_at":"2026-09-16","notes":"Semantic target basis. Exact set-command syntax remains unverified."}
+]

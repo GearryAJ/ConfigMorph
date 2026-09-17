@@ -2,6 +2,7 @@ import ipaddress, re
 from app.core.models import (Address, FirewallConfig, Interface, NatRule, ParseIssue, Provenance, SecurityRule, Service, Severity, StaticRoute, UnparsedConstruct, Vendor, Zone)
 from app.core.parsing.base import DetectionResult
 from .topology import AsaTopologyResolver
+from app.core.versions import detect_version
 
 PORTS={"www":"80","http":"80","https":"443","ssh":"22","domain":"53","smtp":"25"}; OPS={"eq","range","lt","gt","neq"}
 
@@ -11,7 +12,7 @@ class AsaParser:
         hits=[x for x in ("access-list","object network","object-group","nameif","security-level") if x in text.lower()]; return DetectionResult(self.vendor,min(1,len(hits)/3),hits)
     def validate_input(self,text):return [] if text.strip() else [ParseIssue(severity=Severity.ERROR,vendor=self.vendor,message="Configuration is empty")]
     def parse(self,text):
-        lines=text.splitlines(); cfg=FirewallConfig(metadata={"source_vendor":self.vendor}); cfg.warnings.extend(self.validate_input(text)); current=None; section=None; remarks={}; attachments={}; positions={}; nat_position=0
+        lines=text.splitlines(); version=detect_version(text,self.vendor); cfg=FirewallConfig(metadata={"source_vendor":self.vendor,"version_detection":version.model_dump(mode="json")}); cfg.warnings.extend(self.validate_input(text)); current=None; section=None; remarks={}; attachments={}; positions={}; nat_position=0
         for number,raw in enumerate(lines,1):
             line=raw.strip()
             if not line or line.startswith("!"):current=None; section=None; continue

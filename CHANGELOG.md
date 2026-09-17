@@ -4,6 +4,11 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Changed
+
+- Added official-vendor documentation provenance, explicit OS version profiles, conservative capability checks, version validation, and review/export provenance for ASA/FortiOS to PAN-OS migration.
+- Downgraded previously optimistic migration claims where source or target version documentation and tested syntax evidence are incomplete.
+
 ### Added
 
 - FortiGate → PAN-OS alpha candidate migration through the normalized IR, shared planner, renderer, review, and validation workflow.

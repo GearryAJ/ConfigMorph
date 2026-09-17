@@ -1,0 +1,1 @@
+{"source_profile":"fortios-7.4","target_profile":"panos-11.1","source_refs":[],"target_refs":[],"note":"Populate feature-specific IDs only when both official semantics are verified."}

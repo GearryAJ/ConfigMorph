@@ -134,7 +134,7 @@ node --check app/static/js/app.js
 - IPv6 topology limitations
 - device-level validation and live deployment
 
-See [migration details](docs/migration.md) and the [review workflow](docs/review.md).
+See [migration details](docs/migration.md), [version-aware support matrix](docs/support-matrix.md), [documentation policy](docs/documentation-policy.md), and the [review workflow](docs/review.md).
 
 ## Contributing and security
 

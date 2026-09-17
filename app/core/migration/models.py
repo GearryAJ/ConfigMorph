@@ -3,6 +3,7 @@ from enum import StrEnum
 from typing import Any
 from pydantic import BaseModel, Field, field_validator
 from app.core.models import Vendor
+from app.core.versions.models import VersionContext
 
 class CompatibilityStatus(StrEnum):
     EXACT="EXACT"; SUPPORTED="SUPPORTED"; PARTIAL="PARTIAL"; MANUAL_REVIEW="MANUAL_REVIEW"; UNSUPPORTED="UNSUPPORTED"
@@ -11,6 +12,7 @@ class CompatibilityResult(BaseModel):
     entity_id:str; entity_type:str; source_name:str; status:CompatibilityStatus
     reasons:list[str]=Field(default_factory=list); required_mappings:list[str]=Field(default_factory=list); source_context:str|None=None
     topology:dict[str,Any]=Field(default_factory=dict)
+    source_version:str|None=None; target_version:str|None=None; capability_refs:list[str]=Field(default_factory=list); documentation_refs:list[str]=Field(default_factory=list); version_status:str="VERSION_NOT_VERIFIED"
 
 class InterfaceMapping(BaseModel):
     source_interface:str; source_nameif:str|None=None; target_interface:str|None=None; target_zone:str|None=None; suggested_zone:str|None=None; confirmed:bool=False
@@ -39,6 +41,7 @@ class MigrationPlan(BaseModel):
     source_vendor:Vendor; target_vendor:Vendor=Vendor.PALO_ALTO; mappings:MigrationMappings
     compatibility:list[CompatibilityResult]; names:list[NameMapping]; generate:list[PlannedEntity]
     blocked:list[str]=Field(default_factory=list); advisories:list[str]=Field(default_factory=list)
+    source_version:VersionContext|None=None; target_version:VersionContext|None=None
 
 class CategoryCounts(BaseModel):
     objects:int=0; services:int=0; interfaces:int=0; zones:int=0; security_policies:int=0; nat_policies:int=0; routes:int=0
@@ -49,6 +52,7 @@ class MigrationReport(BaseModel):
     categories:CategoryCounts; warnings:list[str]=Field(default_factory=list); errors:list[str]=Field(default_factory=list)
     required_mappings:list[str]=Field(default_factory=list); generated_entities:int=0; skipped_entities:int=0
     compatibility:list[CompatibilityResult]; names:list[NameMapping]
+    source_version:VersionContext|None=None; target_version:VersionContext|None=None; documentation_refs:list[str]=Field(default_factory=list); version_validation_result:str="BLOCKING"
 
 class PanSetCommand(BaseModel):
     path:list[str]; values:list[str]=Field(default_factory=list); entity_id:str; text:str=""

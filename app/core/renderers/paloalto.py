@@ -7,7 +7,13 @@ def quote(value:str):
     return '"'+value.replace('\\','\\\\').replace('"','\\"')+'"' if re.search(r"\s|[\"\\]",value) else value
 
 class PaloAltoRenderer:
-    def render(self,plan):
+    def render(self,plan,target_profile=None):
+        if target_profile is None and plan.target_version:
+            from app.core.versions import version_profile
+            target_profile=version_profile(plan.target_vendor,plan.target_version.selected_family)
+        if target_profile is None:
+            self.commands=[]
+            return [],build_report(plan,(),["Target PAN-OS version profile is required."])
         commands=[]; generated=set(); errors=[]
         prefix=["set",("device-group" if plan.mappings.mode=="device_group" else "vsys"),plan.mappings.device_group or plan.mappings.vsys]
         def emit(entity,*parts,context=True): commands.append(PanSetCommand(path=(prefix if context else ["set"])+list(parts),entity_id=entity.entity_id)); generated.add(entity.entity_id)

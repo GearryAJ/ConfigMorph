@@ -13,8 +13,8 @@ def test_attachment_connected_topology_policy_and_named_service():
     assert rule.source_zones==['outside'] and rule.destination_zones==['dmz'] and rule.description=='publish web'
     assert rule.position==10 and cfg.services[-1].protocol=='tcp' and cfg.services[-1].destination_ports==['443']
     plan=MigrationPlanner().plan(cfg,MAP); lines,_=PaloAltoRenderer().render(plan)
-    assert next(x for x in plan.compatibility if x.entity_id==rule.id).status=='SUPPORTED'
-    assert any(' rules OUT_line_10 from untrust' in x for x in lines)
+    assert next(x for x in plan.compatibility if x.entity_id==rule.id).status=='MANUAL_REVIEW'
+    assert not lines
 
 def test_longest_prefix_groups_any_outbound_and_unattached():
     cfg=parse_config(BASE+'''route outside 0.0.0.0 0.0.0.0 192.0.2.1\nroute dmz 172.16.0.0 255.255.0.0 10.20.30.2\nobject network A\n host 172.16.2.3\nobject network B\n host 8.8.8.8\nobject-group network MIX\n network-object object A\n network-object object B\naccess-list X extended permit ip any object A\naccess-list Y extended permit ip any object-group MIX\naccess-list Z extended permit ip any any\naccess-group X in interface inside\naccess-group Y in interface inside\n''',Vendor.ASA)
@@ -37,8 +37,8 @@ def test_nat_taxonomy_order_and_safe_rendering():
     assert [x.vendor_extensions['section'] for x in cfg.nat_policies]==[2,2,1,3]
     assert [x.type for x in cfg.nat_policies]==['dynamic_pat','static_source_nat','identity_nat','twice_nat']
     plan=MigrationPlanner().plan(cfg,MAP); lines,_=PaloAltoRenderer().render(plan)
-    assert sum(x.entity_type=='nat_policy' and x.status=='SUPPORTED' for x in plan.compatibility)==2
-    assert any('dynamic-ip-and-port interface-address interface' in x for x in lines)
+    assert sum(x.entity_type=='nat_policy' and x.status=='SUPPORTED' for x in plan.compatibility)==0
+    assert not lines
     assert not any('NAT-003' in x or 'NAT-004' in x for x in lines)
 
 def test_equal_prefix_route_is_ambiguous_and_group_cycle_safe():
