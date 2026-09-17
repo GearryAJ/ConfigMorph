@@ -12,6 +12,8 @@ pytest -q
 node --check app/static/js/app.js
 ```
 
+`pytest` creates and migrates isolated temporary data and workspace directories. It never uses `data/studio.db` or `workspace/`.
+
 ## Architecture principles
 
 - Parse vendor input into the normalized `FirewallConfig` IR first.

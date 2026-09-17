@@ -10,9 +10,12 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FCS_DATA_DIR: ${{ runner.temp }}/convert-in-data
+      FCS_WORKSPACE_DIR: ${{ runner.temp }}/convert-in-workspace
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -20,9 +23,11 @@ jobs:
         run: python -m pip install -e ".[test]"
       - name: Compile Python
         run: python -m compileall -q app
+      - name: Create temporary runtime directories
+        run: mkdir -p "$FCS_DATA_DIR" "$FCS_WORKSPACE_DIR"
+      - name: Apply database migrations
+        run: alembic upgrade head
       - name: Test
         run: pytest -q
       - name: Check JavaScript syntax
         run: node --check app/static/js/app.js
-      - name: Apply database migrations
-        run: alembic upgrade head
