@@ -2,6 +2,12 @@
 
 Convert-In is Apache-2.0 licensed. Dependencies retain their own licenses.
 
+## Development tools
+
+### anti-slop 3.2.9
+
+[anti-slop](https://github.com/miqdadbadjuber/anti-slop) is licensed under the MIT License. Its project-scoped Codex skill files retain their upstream attribution and license terms. anti-slop is used only for development guidance and is not an application runtime dependency.
+
 ## Vendored browser assets
 
 ### Cytoscape.js 3.33.1
