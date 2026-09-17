@@ -17,7 +17,7 @@ def build_review(cfg,plan,commands=(),decisions=None):
     decisions={k:(v if isinstance(v,ReviewDecision) else ReviewDecision.model_validate(v)) for k,v in (decisions or {}).items()}
     entities={x.id:x for xs in (cfg.interfaces,cfg.zones,cfg.addresses,cfg.address_groups,cfg.services,cfg.service_groups,cfg.security_policies,cfg.nat_policies,cfg.static_routes,cfg.vpn_objects) for x in xs}
     planned={x.entity_id:x for x in plan.generate}; names={x.entity_id:x.target_name for x in plan.names}; by_command=defaultdict(list)
-    for number,c in enumerate(commands,1): by_command[c.entity_id].append({"id":semantic_hash({"entity":c.entity_id,"path":c.path,"values":c.values})[:16],"line":number,"text":c.text})
+    for number,c in enumerate(commands,1): by_command[c.entity_id].append({"id":semantic_hash({"entity":c.entity_id,"path":c.path,"values":c.values})[:16],"line":number,"text":c.text,"target_profile":c.target_profile,"capability_id":c.capability_id,"documentation_refs":c.documentation_refs,"context":c.management_context.model_dump(mode="json")})
     analysis,_=AnalysisEngine().analyze(cfg); findings=defaultdict(list)
     for f in analysis.findings:
         findings[f.primary_object_id].append(f.model_dump(mode="json"))

@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from app.core.models import Vendor
 from app.core.versions.models import VersionContext
 
@@ -17,19 +17,32 @@ class CompatibilityResult(BaseModel):
 class InterfaceMapping(BaseModel):
     source_interface:str; source_nameif:str|None=None; target_interface:str|None=None; target_zone:str|None=None; suggested_zone:str|None=None; confirmed:bool=False
 
+class TargetManagementMode(StrEnum):
+    LOCAL_FIREWALL="LOCAL_FIREWALL"; PANORAMA="PANORAMA"
+
+class RulebaseScope(StrEnum):
+    PRE="PRE"; POST="POST"
+
 class MigrationMappings(BaseModel):
-    mode:str="vsys"; vsys:str="vsys1"; device_group:str|None=None; virtual_router:str="default"
+    management_mode:TargetManagementMode=TargetManagementMode.LOCAL_FIREWALL
+    vsys:str="vsys1"; device_group:str|None=None; rulebase_scope:RulebaseScope|None=None; virtual_router:str="default"
     interfaces:list[InterfaceMapping]=Field(default_factory=list)
-    @field_validator("mode")
+    @model_validator(mode="before")
     @classmethod
-    def valid_mode(cls,v):
-        if v not in {"vsys","device_group"}: raise ValueError("mode must be vsys or device_group")
+    def legacy_mode(cls,v):
+        if isinstance(v,dict) and "mode" in v and "management_mode" not in v:
+            v=dict(v); v["management_mode"]="PANORAMA" if v.pop("mode")=="device_group" else "LOCAL_FIREWALL"
         return v
-    @field_validator("vsys","virtual_router")
+    @field_validator("vsys","virtual_router","device_group")
     @classmethod
     def safe_context(cls,v):
-        if not v.strip() or any(x in v for x in "\r\n\t\"'\\"): raise ValueError("invalid target context")
+        if v is not None and (not v.strip() or not __import__("re").fullmatch(r"[A-Za-z0-9._-]+",v)): raise ValueError("invalid target context")
         return v
+    @model_validator(mode="after")
+    def panorama_context(self):
+        if self.management_mode==TargetManagementMode.PANORAMA and not self.device_group: raise ValueError("Panorama requires device_group")
+        if self.management_mode==TargetManagementMode.PANORAMA and not self.rulebase_scope: raise ValueError("Panorama requires rulebase_scope")
+        return self
 
 class NameMapping(BaseModel):
     entity_id:str; source_name:str; target_name:str; reason:str|None=None; collision:bool=False
@@ -55,7 +68,9 @@ class MigrationReport(BaseModel):
     source_version:VersionContext|None=None; target_version:VersionContext|None=None; documentation_refs:list[str]=Field(default_factory=list); version_validation_result:str="BLOCKING"
 
 class PanSetCommand(BaseModel):
-    path:list[str]; values:list[str]=Field(default_factory=list); entity_id:str; text:str=""
+    operation:str="SET"; path:list[str]; values:list[str]=Field(default_factory=list); entity_id:str; text:str=""
+    target_profile:str; capability_id:str; documentation_refs:list[str]
+    management_context:MigrationMappings
 
 class RenderResult(BaseModel):
     status:str; generated_lines:int; generated_entities:int; skipped_entities:int; manual_review:int; unsupported:int

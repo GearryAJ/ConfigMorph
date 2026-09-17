@@ -8,6 +8,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 - Added official-vendor documentation provenance, explicit OS version profiles, conservative capability checks, version validation, and review/export provenance for ASA/FortiOS to PAN-OS migration.
 - Downgraded previously optimistic migration claims where source or target version documentation and tested syntax evidence are incomplete.
+- Expanded focused official references; added structured evidence completeness, PAN command provenance/context, orphan-reference validation, and development-time documentation coverage reporting.
+- Corrected PAN-OS 11.1 local command roots, separated management context from CLI tokens, constrained serializer tokens, and retained policy-ordering, NAT, Panorama, and PAN-OS 12.1 route blocks.
 
 ### Added
 

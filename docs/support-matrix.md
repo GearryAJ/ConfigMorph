@@ -1,17 +1,19 @@
 # Version-aware support matrix
 
-States: **Implemented + Tested**, **Implemented + Untested**, **Documented, not implemented**, **Not verified**, **Not applicable**.
+States: **SYNTAX_VERIFIED**, **END_TO_END_VERIFIED**, **VERSION_NOT_VERIFIED**, **MANUAL_REVIEW**, **NOT_APPLICABLE**.
 
 | Feature | ASA 9.20 | ASA 9.22 | ASA 9.24 | FortiOS 7.4 | FortiOS 7.6 | PAN-OS 11.1 | PAN-OS 12.1 |
 |---|---|---|---|---|---|---|---|
-| Addresses/groups | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
-| Services/groups | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
-| Security policy | Not verified | Not verified | Not verified | Not verified | Not verified | Implemented + Tested | Not verified |
-| Static routes | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified | Not verified |
-| Interface PAT | Not applicable | Not applicable | Not applicable | Implemented + Tested | Implemented + Tested | Not verified | Not verified |
-| VIP static/port DNAT | Not applicable | Not applicable | Not applicable | Implemented + Tested | Implemented + Tested | Not verified | Not verified |
-| ASA static NAT/PAT | Not verified | Not verified | Not verified | Not applicable | Not applicable | Not verified | Not verified |
-| IP pools / central NAT | Not applicable | Not applicable | Not applicable | Documented, not implemented | Documented, not implemented | Not applicable | Not applicable |
-| VDOM / SD-WAN / profiles | Not applicable | Not applicable | Not applicable | Documented, not implemented | Documented, not implemented | Not applicable | Not applicable |
+| Addresses/groups | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | SYNTAX_VERIFIED | VERSION_NOT_VERIFIED |
+| Services/groups | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | SYNTAX_VERIFIED | VERSION_NOT_VERIFIED |
+| Security policy | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | MANUAL_REVIEW | IMPLEMENTED_NOT_VERIFIED |
+| Static routes | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | VERSION_NOT_VERIFIED | SYNTAX_VERIFIED | VERSION_NOT_VERIFIED |
+| Interface PAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | VERIFIED | VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED |
+| VIP static/port DNAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | VERIFIED | VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED |
+| ASA static NAT/PAT | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED | NOT_APPLICABLE | NOT_APPLICABLE | IMPLEMENTED_NOT_VERIFIED | IMPLEMENTED_NOT_VERIFIED |
+| IP pools / central NAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | NOT_APPLICABLE | NOT_APPLICABLE |
+| VDOM / SD-WAN / profiles | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | NOT_APPLICABLE | NOT_APPLICABLE |
 
-The matrix describes individual implementation evidence, not end-to-end conversion assurance. No current pair has complete source and target evidence for all emitted command categories; unverified entities downgrade to manual review.
+The matrix describes individual evidence, not end-to-end assurance. PAN-OS 11.1 security semantics and configure hierarchy are documented, but the renderer's local context prefix and explicit rule-order establishment remain unverified. PAN-OS 12.1 hierarchy and introduced/removed set-command pages are independently resolved. The 12.1 removal record blocks inheritance of local rulebase and legacy virtual-router static-route paths. Unverified entities remain manual review.
+
+Run `python -m app.tools.doc_coverage` for development-time evidence counts and registry errors.

@@ -16,6 +16,23 @@ class CapabilityStatus(StrEnum):
 class VendorVersion(BaseModel): vendor:Vendor; os_name:str; value:str
 class VersionFamily(BaseModel): vendor:Vendor; os_name:str; value:str
 class Capability(BaseModel): status:CapabilityStatus; documentation_refs:list[str]=Field(default_factory=list); syntax_variant:str|None=None; limitation:str|None=None
+
+class EvidenceState(BaseModel):
+    source_semantic_documented:bool=False; target_semantic_documented:bool=False; target_cli_documented:bool=False
+    renderer_syntax_verified:bool=False; ordering_verified:bool=True; tests_verified:bool=False; version_verified:bool=False
+    @property
+    def complete(self): return all(self.model_dump().values())
+
+class CommandContext(StrEnum):
+    LOCAL_VSYS="LOCAL_VSYS"; PANORAMA_DEVICE_GROUP="PANORAMA_DEVICE_GROUP"; PRE_RULEBASE="PRE_RULEBASE"; POST_RULEBASE="POST_RULEBASE"
+
+class CommandCapability(BaseModel):
+    id:str; entity_type:str; operation:str; target_profile:str
+    documentation_refs:list[str]=Field(default_factory=list)
+    syntax_verified:bool=False; semantic_verified:bool=False; tests:list[str]=Field(default_factory=list)
+    contexts:list[CommandContext]=Field(default_factory=list)
+    @property
+    def verified(self): return self.syntax_verified and self.semantic_verified and bool(self.documentation_refs) and bool(self.tests)
 class VersionProfile(BaseModel):
     id:str; vendor:Vendor; os_name:str; version_family:str; documentation_refs:list[str]=Field(default_factory=list)
     capabilities:dict[str,Capability]=Field(default_factory=dict); syntax_variants:dict[str,str]=Field(default_factory=dict); known_limitations:list[str]=Field(default_factory=list); tested:bool=False

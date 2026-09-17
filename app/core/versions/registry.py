@@ -14,6 +14,10 @@ for family in ("11.1","12.1"):
     refs=[f"PANOS-{family}-SECURITY-POLICY"] if family=="11.1" else []
     caps={x:_cap([],S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED) for x in ("address","address_group","service","service_group","route","static_source_nat","dynamic_pat","destination_nat")}
     caps["security_policy"]=_cap(refs,S.DOCUMENTED_IMPLEMENTED_TESTED if refs else S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED)
+    if family=="11.1":
+        cli="PANOS-11.1-CONFIGURE-CLI-HIERARCHY"
+        for name in ("address","address_group","service","service_group","route"):
+            caps[name]=_cap([cli])
     PROFILES[f"panos-{family}"]=VersionProfile(id=f"panos-{family}",vendor=Vendor.PALO_ALTO,os_name="PAN-OS",version_family=family,documentation_refs=refs,capabilities=caps,tested=family=="11.1")
 
 def version_profile(vendor:Vendor,family:str|None): return next((x for x in PROFILES.values() if x.vendor==vendor and x.version_family==family),None)

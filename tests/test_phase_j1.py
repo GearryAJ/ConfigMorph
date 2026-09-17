@@ -24,7 +24,7 @@ def test_unknown_unsupported_and_override_are_conservative():
     assert context.override and context.override_timestamp and context.detected_version=="7.4.12"
 
 def test_documentation_registry_official_and_complete():
-    assert len(DOCUMENTATION_REFERENCES)==8 and not validate_documentation_registry()
+    assert len(DOCUMENTATION_REFERENCES)>=8 and not validate_documentation_registry()
     assert all(str(x.official_url).startswith("https://") for x in DOCUMENTATION_REFERENCES.values())
 
 def _versioned(vendor,source,target="11.1"):

@@ -61,7 +61,8 @@ class MigrationPlanner:
             required=[f"zone:{z}" for z in x.source_zones+x.destination_zones if z not in zone_maps]
             refs=x.sources+x.destinations+x.services; missing=[r for r in refs if r.lower() not in {"any","any4","any6","application-default","service-http","service-https"} and r not in by_name]
             profiles=x.vendor_extensions.get("security_profiles",[])
-            if x.vendor_extensions.get("manual_review"): add(x,"security_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"],topology=topology)
+            if target_profile and target_profile.version_family=="11.1": add(x,"security_policy",S.MANUAL_REVIEW,None,"Target field syntax is verified; deterministic rule ordering is not verified.",topology=topology)
+            elif x.vendor_extensions.get("manual_review"): add(x,"security_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"],topology=topology)
             elif profiles: add(x,"security_policy",S.MANUAL_REVIEW,None,f"Security profiles are preserved for review and not migrated: {', '.join(profiles)}",required=required,topology=topology)
             elif x.vendor_extensions.get("attached") is False: add(x,"security_policy",S.MANUAL_REVIEW,None,"ACL is not attached and is not proven active.",topology=topology)
             elif x.vendor_extensions.get("attachment",{}).get("direction")=="out": add(x,"security_policy",S.MANUAL_REVIEW,None,"Outbound ASA ACL semantics require engineer review.",topology=topology)
@@ -76,7 +77,8 @@ class MigrationPlanner:
             required=[f"zone:{z}" for z in x.source_zones+x.destination_zones if z not in zone_maps]
             refs=x.original_source+x.original_destination+x.translated_source+x.translated_destination
             missing=[r for r in refs if r not in {"any","interface"} and r not in by_name and not self._ip_value(r)]
-            if x.vendor_extensions.get("manual_review"): add(x,"nat_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"])
+            if target_profile: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"PAN-OS {target_profile.version_family} NAT subtype target semantics are not independently verified.")
+            elif x.vendor_extensions.get("manual_review"): add(x,"nat_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"])
             elif x.identity: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Identity NAT is preserved but not rendered.")
             elif x.type not in {"static_source_nat","dynamic_pat","destination_nat"}: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"NAT type {x.type} is preserved but not safely rendered.")
             elif missing: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Unresolved NAT references: {', '.join(missing)}")
