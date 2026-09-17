@@ -1,7 +1,7 @@
 from app.core.models import Vendor
 from .models import Capability,CapabilityStatus as S,VersionProfile
 
-def _cap(refs,status=S.DOCUMENTED_IMPLEMENTED_TESTED,limitation=None): return Capability(status=status,documentation_refs=refs,limitation=limitation)
+def _cap(refs,status=S.DOCUMENTED_IMPLEMENTED_TESTED,limitation=None,**evidence): return Capability(status=status,documentation_refs=refs,limitation=limitation,**evidence)
 PROFILES={}
 for family in ("9.20","9.22","9.24"):
     ref=f"ASA-{family}-GENERAL"; PROFILES[f"asa-{family}"]=VersionProfile(id=f"asa-{family}",vendor=Vendor.ASA,os_name="Cisco ASA",version_family=family,documentation_refs=[ref],capabilities={x:_cap([ref],S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED) for x in ("address","address_group","service","service_group","security_policy","route")})
@@ -23,6 +23,10 @@ for family in ("11.1","12.1"):
     caps["security_policy"]=_cap(refs+["PANOS-11.1-CONFIG-API-ACTIONS"] if refs else [],S.DOCUMENTED_IMPLEMENTED_TESTED if refs else S.IMPLEMENTED_NOT_DOCUMENTATION_VERIFIED)
     if family=="11.1":
         cli="PANOS-11.1-CONFIGURE-CLI-HIERARCHY"
+        general="PANOS-11.1-NAT-POLICY-RULES"; dipp="PANOS-11.1-SOURCE-DIPP"; dnat="PANOS-11.1-DNAT-ONE-TO-ONE"
+        caps["dynamic_ip_and_port"]=_cap([general,dipp,cli],S.DOCUMENTED_NOT_IMPLEMENTED,target_match_semantics_documented=True,target_translation_semantics_documented=True,route_lookup_semantics_documented=True,limitation="Ordering, placement, mapping, and renderer verification remain blocked.")
+        caps["interface_address_pat"]=_cap([general,dipp,cli],S.DOCUMENTED_NOT_IMPLEMENTED,target_match_semantics_documented=True,target_translation_semantics_documented=True,route_lookup_semantics_documented=True,limitation="Target interface selection, ordering, placement, mapping, and renderer verification remain blocked.")
+        caps["destination_static_nat"]=_cap([general,dnat,cli],S.DOCUMENTED_NOT_IMPLEMENTED,target_match_semantics_documented=True,target_translation_semantics_documented=True,route_lookup_semantics_documented=True,limitation="Original-destination route outcome, ordering, placement, mapping, and renderer verification remain blocked.")
         for name in ("address","address_group","service","service_group","route"):
             caps[name]=_cap([cli])
     PROFILES[f"panos-{family}"]=VersionProfile(id=f"panos-{family}",vendor=Vendor.PALO_ALTO,os_name="PAN-OS",version_family=family,documentation_refs=refs,capabilities=caps,tested=family=="11.1")

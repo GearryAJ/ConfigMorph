@@ -70,3 +70,42 @@ def test_no_generated_nat_entity_or_command_without_complete_evidence():
     assert not [x for x in plan.generate if x.entity_type=="nat_policy"]
     renderer=PaloAltoRenderer(); renderer.render(plan)
     assert not [x for x in renderer.commands if "nat" in x.path]
+
+@pytest.mark.parametrize("capability",["dynamic_ip_and_port","interface_address_pat","destination_static_nat"])
+def test_panos_111_target_nat_semantics_are_independently_verified(capability):
+    state=evidence_state(PROFILES["asa-9.20"],PROFILES["panos-11.1"],capability)
+    assert state.target_match_semantics_documented and state.target_translation_semantics_documented
+    assert state.route_lookup_semantics_documented
+    assert not state.ordering_verified and not state.placement_verified and not state.complete
+
+def test_dnat_evidence_distinguishes_pre_nat_match_from_post_nat_security_zone():
+    capability=PROFILES["panos-11.1"].capabilities["destination_static_nat"]
+    assert "PANOS-11.1-DNAT-ONE-TO-ONE" in capability.documentation_refs
+    cfg=parse_config('''#config-version=FGT60F-7.4.0
+config firewall vip
+ edit "WEB"
+  set extip 192.0.2.10
+  set mappedip 10.0.0.10
+  set extintf "outside"
+ next
+end''',Vendor.FORTIGATE)
+    cfg.nat_policies[0].source_zones=["outside"]
+    cfg.nat_policies[0].destination_zones=["inside"]
+    plan=MigrationPlanner().plan(cfg,MAP,resolve_context("",Vendor.FORTIGATE,"7.4"),resolve_context("",Vendor.PALO_ALTO,"11.1"))
+    reason=" ".join(next(x for x in plan.compatibility if x.entity_type=="nat_policy").reasons)
+    assert "destination-zone route-lookup semantics: Verified" in reason
+    assert "route outcome mapping: Not verified" in reason
+    assert "ordering: Not verified" in reason and "placement: Not verified" in reason
+    assert not [x for x in plan.generate if x.entity_type=="nat_policy"]
+
+def test_port_translation_target_semantics_remain_unverified():
+    state=evidence_state(PROFILES["fortios-7.4"],PROFILES["panos-11.1"],"destination_port_translation")
+    assert not state.target_match_semantics_documented
+    assert not state.target_translation_semantics_documented
+    assert not state.route_lookup_semantics_documented
+
+def test_panos_121_does_not_inherit_nat_semantic_evidence():
+    state=evidence_state(PROFILES["asa-9.20"],PROFILES["panos-12.1"],"dynamic_ip_and_port")
+    assert not state.target_match_semantics_documented
+    assert not state.target_translation_semantics_documented
+    assert not state.route_lookup_semantics_documented

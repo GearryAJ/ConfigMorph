@@ -19,7 +19,7 @@ Mappings explicitly bind each source interface/context to a target interface and
 - Arbitrary VIP services, incomplete port-forward fields, load balancing, VIP groups, DNS translation, FQDN VIP, NAT46/NAT64, and ARP behavior.
 - Central NAT. Policy `nat enable` is not treated as complete semantics when central NAT is enabled.
 
-FortiOS 7.4/7.6 source semantics are documented for policy SNAT and static VIPs. Generation remains blocked: the current IR does not prove every required target zone/interface and policy association, while PAN-OS NAT ordering and placement are not verified end-to-end.
+FortiOS 7.4/7.6 source semantics remain separate from PAN-OS target evidence. PAN-OS 11.1 DIPP, interface-address PAT, and one-to-one DNAT target semantics are documented. Port translation target semantics, deterministic ordering/placement, route outcome mapping, and complete VIP policy association remain blocked. No NAT candidate commands are emitted.
 - IPS, antivirus, web filter, application control, SSL inspection, DNS filter, UTM, and profile groups. References are reported; profiles are not invented.
 - Multiple VDOM flattening, FortiGate SD-WAN, policy routes, ECMP-specific behavior, and dynamic routing.
 - Source-port restrictions, ICMP, SCTP, protocol-number, helper, and session-TTL service behavior.

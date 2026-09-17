@@ -15,11 +15,14 @@ class CapabilityStatus(StrEnum):
 
 class VendorVersion(BaseModel): vendor:Vendor; os_name:str; value:str
 class VersionFamily(BaseModel): vendor:Vendor; os_name:str; value:str
-class Capability(BaseModel): status:CapabilityStatus; documentation_refs:list[str]=Field(default_factory=list); syntax_variant:str|None=None; limitation:str|None=None
+class Capability(BaseModel):
+    status:CapabilityStatus; documentation_refs:list[str]=Field(default_factory=list); syntax_variant:str|None=None; limitation:str|None=None
+    target_match_semantics_documented:bool=False; target_translation_semantics_documented:bool=False; route_lookup_semantics_documented:bool=False
 
 class EvidenceState(BaseModel):
-    source_semantic_documented:bool=False; target_semantic_documented:bool=False; target_cli_documented:bool=False
-    renderer_syntax_verified:bool=False; nat_ordering_verified:bool=False; placement_verified:bool=False
+    source_semantic_documented:bool=False; target_match_semantics_documented:bool=False; target_translation_semantics_documented:bool=False
+    target_cli_documented:bool=False; route_lookup_semantics_documented:bool=False; renderer_syntax_verified:bool=False
+    ordering_verified:bool=False; placement_verified:bool=False
     mapping_verified:bool=False; tests_verified:bool=False; version_verified:bool=False
     @property
     def complete(self): return all(self.model_dump().values())

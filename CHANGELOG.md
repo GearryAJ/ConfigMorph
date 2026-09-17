@@ -12,6 +12,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Corrected PAN-OS 11.1 local command roots, separated management context from CLI tokens, constrained serializer tokens, and retained NAT, Panorama, and PAN-OS 12.1 route blocks.
 - Added explicit security-rule placement and a documented, deterministic Configuration API move intent artifact; candidate set files remain set commands only.
 - Split NAT evidence into source/destination subtypes. Added zero-optimism evidence dimensions and explicit review-only accounting; no NAT candidate generation was restored.
+- Documented PAN-OS 11.1 DIPP, interface-address PAT, one-to-one DNAT, original-destination route lookup, and post-NAT security-zone semantics without enabling NAT generation.
 
 ### Added
 

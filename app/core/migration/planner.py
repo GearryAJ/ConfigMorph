@@ -5,7 +5,7 @@ from .compatibility import result
 from .mappings import confirmed_maps, normalize_names
 from .models import CompatibilityStatus as S, MigrationMappings, MigrationPlan, PlannedEntity
 from .registry import migration_pair
-from app.core.versions import capability_verified,version_profile
+from app.core.versions import capability_verified,evidence_state,version_profile
 from app.core.versions.models import CapabilityStatus,VersionContext
 
 class MigrationPlanner:
@@ -85,7 +85,10 @@ class MigrationPlanner:
             if x.vendor_extensions.get("manual_review"): add(x,"nat_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"])
             elif x.identity: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Identity NAT is preserved but not rendered.")
             elif subtype in {"twice_nat","identity_nat","central_nat","ip_pool_snat"}: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"NAT subtype {subtype} is preserved but not rendered.")
-            elif target_profile: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"PAN-OS {target_profile.version_family} {subtype} evidence is incomplete: ordering, placement, mapping, or target semantics are not verified.")
+            elif target_profile:
+                evidence=evidence_state(source_profile,target_profile,subtype)
+                yes=lambda value:"Verified" if value else "Not verified"
+                add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Target match semantics: {yes(evidence.target_match_semantics_documented)}; translated address semantics: {yes(evidence.target_translation_semantics_documented)}; destination-zone route-lookup semantics: {yes(evidence.route_lookup_semantics_documented)}; route outcome mapping: {yes(evidence.mapping_verified)}; ordering: {yes(evidence.ordering_verified)}; placement: {yes(evidence.placement_verified)}; result: MANUAL_REVIEW.")
             elif missing: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Unresolved NAT references: {', '.join(missing)}")
             elif required: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Confirmed source and destination zone mappings are required.",required=required)
             else:

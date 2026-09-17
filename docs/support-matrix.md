@@ -19,6 +19,6 @@ States: **SYNTAX_VERIFIED**, **END_TO_END_VERIFIED**, **VERSION_NOT_VERIFIED**, 
 | Central NAT | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | VERSION_NOT_VERIFIED |
 | VDOM / SD-WAN / profiles | NOT_APPLICABLE | NOT_APPLICABLE | NOT_APPLICABLE | DOCUMENTED_NOT_IMPLEMENTED | DOCUMENTED_NOT_IMPLEMENTED | NOT_APPLICABLE | NOT_APPLICABLE |
 
-The matrix describes individual evidence, not device validation. PAN-OS 11.1 local security-policy generation requires explicit placement and exports a separate, non-executed Configuration API move intent. NAT capabilities are independent; none currently pass the full semantic, CLI, ordering, placement, mapping, test, and version gate. PAN-OS 12.1 remains blocked independently.
+The matrix describes individual evidence, not device validation. PAN-OS 11.1 local security-policy generation requires explicit placement and exports a separate, non-executed Configuration API move intent. PAN-OS 11.1 DIPP, interface-address PAT, and one-to-one DNAT target match/translation/route semantics are documented independently. Port translation target semantics remain unverified. No NAT capability passes ordering, deterministic placement, route outcome mapping, renderer, and full end-to-end gates. PAN-OS 12.1 remains blocked independently.
 
 Run `python -m app.tools.doc_coverage` for development-time evidence counts and registry errors.
