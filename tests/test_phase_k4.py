@@ -1,0 +1,72 @@
+import pytest
+
+from app.core.migration import InterfaceMapping,MigrationMappings,MigrationPlanner
+from app.core.models import Vendor
+from app.core.parsing import parse_config
+from app.core.renderers import PaloAltoRenderer
+from app.core.versions import PROFILES,evidence_state,resolve_context
+
+MAP=MigrationMappings(interfaces=[
+    InterfaceMapping(source_interface="inside",source_nameif="inside",target_interface="ethernet1/2",target_zone="trust",confirmed=True),
+    InterfaceMapping(source_interface="outside",source_nameif="outside",target_interface="ethernet1/1",target_zone="untrust",confirmed=True),
+])
+
+@pytest.mark.parametrize("capability",["static_source_nat","dynamic_ip_and_port","interface_address_pat","destination_static_nat","destination_port_translation","identity_nat","twice_nat","ip_pool_snat","central_nat"])
+def test_nat_capabilities_are_independent_and_incomplete(capability):
+    target=PROFILES["panos-11.1"]
+    assert capability in target.capabilities
+    assert not evidence_state(PROFILES["asa-9.20"],target,capability).complete
+    assert not PROFILES["panos-12.1"].capabilities[capability].documentation_refs
+
+@pytest.mark.parametrize("source",[
+    "object network WEB\n host 10.0.0.10\n nat (inside,outside) static 192.0.2.10\n",
+    "object network LAN\n subnet 10.0.0.0 255.255.255.0\n nat (inside,outside) dynamic interface\n",
+    "object network LAN\n subnet 10.0.0.0 255.255.255.0\n nat (inside,outside) static LAN\n",
+    "nat (inside,outside) source static LAN XLATE destination static WEB WEB\n",
+])
+def test_asa_nat_subtypes_are_accounted_without_candidate(source):
+    cfg=parse_config(source,Vendor.ASA)
+    plan=MigrationPlanner().plan(cfg,MAP,resolve_context("",Vendor.ASA,"9.20"),resolve_context("",Vendor.PALO_ALTO,"11.1"))
+    nat=[x for x in plan.compatibility if x.entity_type=="nat_policy"]
+    assert len(nat)==len(cfg.nat_policies) and all(x.status in {"MANUAL_REVIEW","UNSUPPORTED","PARTIAL"} for x in nat)
+    renderer=PaloAltoRenderer(); lines,_=renderer.render(plan)
+    assert not any("rulebase nat" in line for line in lines)
+
+def test_fortigate_pat_pool_central_and_vip_are_independently_accounted():
+    text='''#config-version=FGT60F-7.4.0
+set central-nat enable
+config firewall policy
+ edit 1
+  set srcintf "inside"
+  set dstintf "outside"
+  set srcaddr "all"
+  set dstaddr "all"
+  set service "ALL"
+  set nat enable
+  set ippool enable
+  set poolname "POOL"
+ next
+end
+config firewall vip
+ edit "HTTPS"
+  set extip 192.0.2.10
+  set mappedip 10.0.0.10
+  set extintf "outside"
+  set portforward enable
+  set protocol tcp
+  set extport 443
+  set mappedport 8443
+ next
+end'''
+    cfg=parse_config(text,Vendor.FORTIGATE)
+    plan=MigrationPlanner().plan(cfg,MAP,resolve_context("",Vendor.FORTIGATE,"7.4"),resolve_context("",Vendor.PALO_ALTO,"11.1"))
+    nat=[x for x in plan.compatibility if x.entity_type=="nat_policy"]
+    assert len(nat)==2 and all(x.status=="MANUAL_REVIEW" for x in nat)
+    assert any("Central NAT" in " ".join(x.reasons) for x in nat)
+
+def test_no_generated_nat_entity_or_command_without_complete_evidence():
+    cfg=parse_config("object network LAN\n subnet 10.0.0.0 255.255.255.0\n nat (inside,outside) dynamic interface\n",Vendor.ASA)
+    plan=MigrationPlanner().plan(cfg,MAP,resolve_context("",Vendor.ASA,"9.20"),resolve_context("",Vendor.PALO_ALTO,"11.1"))
+    assert not [x for x in plan.generate if x.entity_type=="nat_policy"]
+    renderer=PaloAltoRenderer(); renderer.render(plan)
+    assert not [x for x in renderer.commands if "nat" in x.path]

@@ -19,7 +19,8 @@ class Capability(BaseModel): status:CapabilityStatus; documentation_refs:list[st
 
 class EvidenceState(BaseModel):
     source_semantic_documented:bool=False; target_semantic_documented:bool=False; target_cli_documented:bool=False
-    renderer_syntax_verified:bool=False; ordering_verified:bool=True; tests_verified:bool=False; version_verified:bool=False
+    renderer_syntax_verified:bool=False; nat_ordering_verified:bool=False; placement_verified:bool=False
+    mapping_verified:bool=False; tests_verified:bool=False; version_verified:bool=False
     @property
     def complete(self): return all(self.model_dump().values())
 

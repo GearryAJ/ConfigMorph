@@ -14,7 +14,7 @@ For PAN-OS 11.1 local firewalls, the renderer emits set commands for validated o
 
 ASA `access-group` attachment, direction, ACL order/remarks, source-port constraints, and protocol fidelity are retained. Inbound ingress context comes from the attachment. Destination context is derived only by connected/static-route longest-prefix matching; evidence appears in compatibility output. Unattached, outbound, any-destination, multi-zone, unresolved, and ambiguous policies remain review-only. Interfaces are mapping-only. Zone creation is not automatic.
 
-NAT remains conservative. Modern object static source NAT and dynamic interface PAT emit candidate rules only with complete semantics and confirmed context mappings. Manual/twice NAT translation tuples, identity status, and sections 1/2/3 are preserved but not rendered. Destination/twice/identity/advanced NAT, VPN, dynamic routing, App-ID inference, User-ID, profiles, inspection, HA, multi-context, policy routing, QoS, and time-range semantics are not automatically converted.
+NAT is accounted subtype-by-subtype: static source, dynamic IP-and-port, interface-address PAT, static destination, destination port translation, identity, twice NAT, IP-pool SNAT, and central NAT. PAN-OS 11.1 CLI hierarchy is documented, but target semantic, ordering, placement, and mapping evidence is not complete. No NAT subtype emits candidate commands. ASA sections 1/2/3, identity state, and translation tuples remain review data. PAN-OS 12.1 and Panorama NAT remain independently blocked.
 
 ## Mapping and naming
 
@@ -33,6 +33,8 @@ Generated files are always **Candidate Configuration — Engineer Review Require
 - `migration/compatibility.json`
 - `migration/mappings.json`
 - `migration/security-rule-ordering.json` when security rules are generated
+
+`nat-rule-ordering.json` is not produced because no NAT definition currently passes the evidence gate.
 
 Review all manual-review/unsupported findings, mappings, normalized parser warnings, names, command references, topology, and behavior on an isolated PAN-OS lab system before any separate deployment process. This application has no deployment capability.
 

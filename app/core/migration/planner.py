@@ -81,10 +81,11 @@ class MigrationPlanner:
             required=[f"zone:{z}" for z in x.source_zones+x.destination_zones if z not in zone_maps]
             refs=x.original_source+x.original_destination+x.translated_source+x.translated_destination
             missing=[r for r in refs if r not in {"any","interface"} and r not in by_name and not self._ip_value(r)]
-            if target_profile: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"PAN-OS {target_profile.version_family} NAT subtype target semantics are not independently verified.")
-            elif x.vendor_extensions.get("manual_review"): add(x,"nat_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"])
+            subtype=("interface_address_pat" if x.type=="dynamic_pat" and x.translation_target=="INTERFACE_ADDRESS" or x.type=="dynamic_pat" and x.translated_source==["interface"] else "destination_port_translation" if x.type=="destination_nat" and x.translated_service else "destination_static_nat" if x.type=="destination_nat" else "dynamic_ip_and_port" if x.type=="dynamic_pat" else x.type)
+            if x.vendor_extensions.get("manual_review"): add(x,"nat_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"])
             elif x.identity: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Identity NAT is preserved but not rendered.")
-            elif x.type not in {"static_source_nat","dynamic_pat","destination_nat"}: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"NAT type {x.type} is preserved but not safely rendered.")
+            elif subtype in {"twice_nat","identity_nat","central_nat","ip_pool_snat"}: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"NAT subtype {subtype} is preserved but not rendered.")
+            elif target_profile: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"PAN-OS {target_profile.version_family} {subtype} evidence is incomplete: ordering, placement, mapping, or target semantics are not verified.")
             elif missing: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Unresolved NAT references: {', '.join(missing)}")
             elif required: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Confirmed source and destination zone mappings are required.",required=required)
             else:

@@ -7,8 +7,6 @@ Convert-In parses FortiOS configuration into the normalized `FirewallConfig` IR,
 - Host/subnet, network, range, and FQDN addresses; static and nested address groups.
 - TCP or UDP destination-port services and static service groups. Mixed TCP/UDP groups remain groups of distinct services.
 - Firewall-policy source/destination contexts, addresses, services, allow/deny action, enabled state, effective parser order, and session-end logging.
-- Simple interface-address PAT when the policy contexts are explicit and mappings are confirmed.
-- One-to-one IPv4 VIP destination NAT. TCP 80/443 port-forward VIPs are supported when mapped address and port are complete.
 - Simple static routes with a confirmed target interface and selected PAN virtual router.
 
 Mappings explicitly bind each source interface/context to a target interface and zone. Suggestions never authorize generation. FortiGate zones retain their member-interface evidence; ambiguous topology remains manual review. VLAN interfaces may inform mappings, but the migration does not create PAN interfaces or subinterfaces.
@@ -16,8 +14,12 @@ Mappings explicitly bind each source interface/context to a target interface and
 ## Review-only semantics
 
 - IP-pool NAT without complete translated-address semantics.
+- Policy interface-address PAT.
+- One-to-one IPv4 VIP destination NAT and VIP port translation.
 - Arbitrary VIP services, incomplete port-forward fields, load balancing, VIP groups, DNS translation, FQDN VIP, NAT46/NAT64, and ARP behavior.
 - Central NAT. Policy `nat enable` is not treated as complete semantics when central NAT is enabled.
+
+FortiOS 7.4/7.6 source semantics are documented for policy SNAT and static VIPs. Generation remains blocked: the current IR does not prove every required target zone/interface and policy association, while PAN-OS NAT ordering and placement are not verified end-to-end.
 - IPS, antivirus, web filter, application control, SSL inspection, DNS filter, UTM, and profile groups. References are reported; profiles are not invented.
 - Multiple VDOM flattening, FortiGate SD-WAN, policy routes, ECMP-specific behavior, and dynamic routing.
 - Source-port restrictions, ICMP, SCTP, protocol-number, helper, and session-TTL service behavior.

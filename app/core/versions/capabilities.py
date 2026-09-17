@@ -8,6 +8,7 @@ def evidence_state(source_profile,target_profile,name,command=None):
     target=target_profile.capabilities.get(name) if target_profile else None
     documented=bool(target and target.documentation_refs)
     verified=bool(source and target and source.status in VERIFIED and target.status in VERIFIED)
-    return EvidenceState(source_semantic_documented=bool(source and source.documentation_refs),target_semantic_documented=documented,target_cli_documented=documented,renderer_syntax_verified=verified,ordering_verified=name!="security_policy",tests_verified=bool(source_profile and target_profile and source_profile.tested and target_profile.tested and (command is None or command.tests)),version_verified=bool(source_profile and target_profile and source_profile.version_family and target_profile.version_family and (command is None or command.target_profile==target_profile.id)))
+    nat=name in {"static_source_nat","dynamic_ip_and_port","interface_address_pat","destination_static_nat","destination_port_translation","identity_nat","twice_nat","ip_pool_snat","central_nat"}
+    return EvidenceState(source_semantic_documented=bool(source and source.documentation_refs),target_semantic_documented=documented,target_cli_documented=documented,renderer_syntax_verified=verified,nat_ordering_verified=not nat,placement_verified=not nat,mapping_verified=not nat,tests_verified=bool(source_profile and target_profile and source_profile.tested and target_profile.tested and (command is None or command.tests)),version_verified=bool(source_profile and target_profile and source_profile.version_family and target_profile.version_family and (command is None or command.target_profile==target_profile.id)))
 
 from .models import EvidenceState
