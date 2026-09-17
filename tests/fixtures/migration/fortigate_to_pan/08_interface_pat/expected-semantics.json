@@ -1,0 +1,8 @@
+{
+  "case": "08_interface_pat",
+  "candidate_expected": true,
+  "entities": 4,
+  "generated": 2,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

@@ -1,0 +1,12 @@
+set vsys vsys1 rulebase security rules First from trust
+set vsys vsys1 rulebase security rules First to untrust
+set vsys vsys1 rulebase security rules First source any
+set vsys vsys1 rulebase security rules First destination any
+set vsys vsys1 rulebase security rules First service any
+set vsys vsys1 rulebase security rules First action allow
+set vsys vsys1 rulebase security rules Second from trust
+set vsys vsys1 rulebase security rules Second to untrust
+set vsys vsys1 rulebase security rules Second source any
+set vsys vsys1 rulebase security rules Second destination any
+set vsys vsys1 rulebase security rules Second service any
+set vsys vsys1 rulebase security rules Second action deny

@@ -1,0 +1,8 @@
+{
+  "case": "01_addresses",
+  "candidate_expected": true,
+  "entities": 6,
+  "generated": 4,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

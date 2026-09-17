@@ -4,7 +4,9 @@
 
 `vendor parser → FirewallConfig IR → compatibility/planner → confirmed mappings → PAN command DTOs → serializer → candidate/report`
 
-Migration code consumes normalized IR only. It does not parse ASA source syntax. Every normalized entity receives one `EXACT`, `SUPPORTED`, `PARTIAL`, `MANUAL_REVIEW`, or `UNSUPPORTED` compatibility record. Omitted entities therefore remain visible in the report.
+Migration code consumes normalized IR only. It does not parse source syntax. A central pair registry selects the Cisco ASA or FortiGate source adapter and the single PAN-OS renderer. Every normalized entity receives one `EXACT`, `SUPPORTED`, `PARTIAL`, `MANUAL_REVIEW`, or `UNSUPPORTED` compatibility record. Omitted entities therefore remain visible in the report.
+
+FortiGate scope and limitations are documented in [fortigate-to-pan.md](fortigate-to-pan.md).
 
 ## ASA to PAN-OS scope
 
@@ -16,7 +18,7 @@ NAT remains conservative. Modern object static source NAT and dynamic interface 
 
 ## Mapping and naming
 
-Workspace-local `migration/mappings.json` stores target mode, `vsys` (default `vsys1`), device group, virtual router, and interface/zone mappings. Suggested zones are separate from `confirmed`; suggestions never authorize generation. Routes accept a confirmed mapping by physical ASA interface or `nameif`.
+Workspace-local `migration/mappings.json` stores target mode, `vsys` (default `vsys1`), device group, virtual router, and interface/zone mappings. Suggested zones are separate from `confirmed`; suggestions never authorize generation. Routes accept a confirmed mapping by source interface or source context.
 
 Names deterministically replace unsupported punctuation with `_`, preserve Unicode word characters, cap candidates at 63 characters, and add `_2`, `_3`, etc. on case-insensitive collisions. Reports retain source/target names, reason, and collision status. Values containing whitespace, quotes, or backslashes are PAN-OS quoted and escaped; control characters are blocked.
 

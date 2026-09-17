@@ -36,7 +36,7 @@ def validate_migration(cfg,plan,review,lines):
             for ref in x.data.get("members",[]):
                 if ref not in created|builtins: add("CANDIDATE",S.BLOCKING,"MISSING_TARGET_REFERENCE",f"Missing target reference: {ref}",x.entity_id)
         if x.entity_type in {"security_policy","nat_policy"}:
-            for key in ("source","destination","service","translated_source"):
+            for key in ("source","destination","service","translated_source","translated_destination"):
                 values=x.data.get(key,[]); values=[values] if isinstance(values,str) else values
                 for ref in values:
                     if ref not in created|builtins and not _ip(ref): add("CANDIDATE",S.BLOCKING,"MISSING_TARGET_REFERENCE",f"Missing target reference: {ref}",x.entity_id)

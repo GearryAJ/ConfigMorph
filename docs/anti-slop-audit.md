@@ -70,7 +70,7 @@ Audit mode: AFTER. Scope: current main workspace, Overview, Visualize, Analyze, 
 
 ## Applied in this phase
 
-AS-001 through AS-005 receive narrow, low-risk corrections. AS-006 and AS-008 remain because complete fixes require coordinated request-state and interaction behavior, not cosmetic attributes. AS-007 remains to avoid an unrequested Overview redesign.
+AS-001 through AS-005 receive narrow, low-risk corrections. AS-006 and AS-008 were resolved during Phase J with coordinated request recovery, complete tab keyboard/ARIA behavior, and review selection state. AS-007 remains deferred to avoid an unrequested Overview redesign.
 
 ## Code comments
 

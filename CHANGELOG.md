@@ -4,6 +4,22 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ## [Unreleased]
 
+### Added
+
+- FortiGate → PAN-OS alpha candidate migration through the normalized IR, shared planner, renderer, review, and validation workflow.
+- Central migration-pair registry and source adapters for Cisco ASA and FortiGate.
+- FortiGate address, group, service, policy, interface PAT, narrow VIP DNAT, and static-route fixtures.
+- Cross-vendor parity, migration accounting, API, architecture, and 1,000-object/1,000-policy performance coverage.
+
+### Changed
+
+- Prepared development version `0.2.0-alpha.1`; no release or tag created.
+- Migration API responses now identify source and target vendors; unsupported pairs are rejected centrally.
+
+### Security
+
+- FortiGate migration remains local-only and candidate-only. Central NAT, VDOM, SD-WAN, security profiles, IP pools, and incomplete VIP semantics remain explicit review items.
+
 ## [0.1.0-alpha.1] - 2026-09-16
 
 ### Added

@@ -23,7 +23,7 @@ class MigrationReviewItem(BaseModel):
     preserved_fields:list[str]=Field(default_factory=list); changed_fields:dict[str,Any]=Field(default_factory=dict); dropped_fields:list[str]=Field(default_factory=list)
     manual_review_reasons:list[str]=Field(default_factory=list); warnings:list[str]=Field(default_factory=list)
     mapping_evidence:dict[str,Any]=Field(default_factory=dict); analysis_findings:list[dict[str,Any]]=Field(default_factory=list)
-    generated_commands:list[dict[str,Any]]=Field(default_factory=list); used_by:list[dict[str,str]]=Field(default_factory=list)
+    generated_commands:list[dict[str,Any]]=Field(default_factory=list); used_by:list[dict[str,str]]=Field(default_factory=list); source_vendor:str|None=None
 
 class ReviewSummary(BaseModel):
     total:int; generated:int; manual_review:int; unsupported:int; reviewed:int; accepted:int; needs_changes:int; blocked:int; manual_review_remaining:int

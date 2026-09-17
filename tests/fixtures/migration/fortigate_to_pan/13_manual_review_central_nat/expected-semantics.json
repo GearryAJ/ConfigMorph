@@ -1,0 +1,8 @@
+{
+  "case": "13_manual_review_central_nat",
+  "candidate_expected": false,
+  "entities": 4,
+  "generated": 1,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

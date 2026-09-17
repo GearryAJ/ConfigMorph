@@ -1,0 +1,4 @@
+set vsys vsys1 service TCP-443 protocol tcp port 443
+set vsys vsys1 service UDP-53 protocol udp port 53
+set vsys vsys1 service-group MIXED static TCP-443
+set vsys vsys1 service-group MIXED static UDP-53

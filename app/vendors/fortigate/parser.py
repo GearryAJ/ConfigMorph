@@ -11,8 +11,8 @@ class FortiGateParser:
     consumed = {
         "system interface": {"alias","description","ip","status","vdom","type","interface","vlanid","role"}, "system zone": {"interface","description"},
         "firewall address": {"subnet","fqdn","start-ip","end-ip","comment"}, "firewall addrgrp": {"member","comment"},
-        "firewall service custom": {"tcp-portrange","udp-portrange","protocol","comment"}, "firewall service group": {"member","comment"},
-        "firewall policy": {"name","srcintf","dstintf","srcaddr","dstaddr","service","action","status","nat","ippool","poolname","comments"},
+        "firewall service custom": {"tcp-portrange","udp-portrange","protocol","protocol-number","icmpcode","icmptype","sctp-portrange","session-ttl","helper","comment"}, "firewall service group": {"member","comment"},
+        "firewall policy": {"name","srcintf","dstintf","srcaddr","dstaddr","service","action","status","nat","ippool","poolname","comments","logtraffic","utm-status","profile-protocol-options","ssl-ssh-profile","av-profile","webfilter-profile","dnsfilter-profile","ips-sensor","application-list","profile-group"},
         "firewall vip": {"extip","mappedip","extintf","portforward","extport","mappedport","protocol","comment"},
         "router static": {"dst","gateway","device","distance","priority","status"},
     }
@@ -22,7 +22,7 @@ class FortiGateParser:
     def validate_input(self, text: str):
         return [] if text.strip() else [ParseIssue(severity=Severity.ERROR, vendor=self.vendor, message="Configuration is empty")]
     def parse(self, text: str) -> FirewallConfig:
-        lines = text.splitlines(); cfg = FirewallConfig(metadata={"source_vendor": self.vendor}); cfg.warnings.extend(self.validate_input(text)); stack=[]; item=None
+        lines = text.splitlines(); lowered=text.lower(); cfg = FirewallConfig(metadata={"source_vendor": self.vendor,"central_nat": "set central-nat enable" in lowered,"vdom_present": "config vdom" in lowered,"sdwan_present": "config system sdwan" in lowered or "virtual-wan-link" in lowered}); cfg.warnings.extend(self.validate_input(text)); stack=[]; item=None
         for number, raw in enumerate(lines, 1):
             line = raw.strip()
             if not line or line.startswith("#"): continue
@@ -69,18 +69,31 @@ class FortiGateParser:
                 cfg.addresses.append(Address(id=name,name=name,type=kind,value=value,description=one("comment"),provenance=p,vendor_extensions=extensions))
             elif section == "firewall addrgrp": cfg.address_groups.append(Address(id=name,name=name,type="group",members=values.get("member",[]),description=one("comment"),provenance=p,vendor_extensions=extensions))
             elif section == "firewall service custom":
-                proto="tcp" if "tcp-portrange" in values else "udp" if "udp-portrange" in values else one("protocol","ip").lower(); cfg.services.append(Service(id=name,name=name,protocol=proto,destination_ports=values.get("tcp-portrange",values.get("udp-portrange",[])),description=one("comment"),provenance=p,vendor_extensions=extensions))
+                tcp=self._ports(values.get("tcp-portrange",[])); udp=self._ports(values.get("udp-portrange",[])); proto="tcp-udp" if tcp[1] and udp[1] else "tcp" if tcp[1] else "udp" if udp[1] else one("protocol","ip").lower()
+                cfg.services.append(Service(id=name,name=name,protocol=proto,source_ports=tcp[0]+udp[0],destination_ports=tcp[1]+udp[1],description=one("comment"),provenance=p,vendor_extensions={**extensions,**{k:values[k] for k in ("protocol-number","icmpcode","icmptype","sctp-portrange","session-ttl","helper") if k in values}}))
             elif section == "firewall service group": cfg.service_groups.append(Service(id=name,name=name,protocol="group",members=values.get("member",[]),description=one("comment"),provenance=p,vendor_extensions=extensions))
             elif section == "firewall policy":
-                rule=SecurityRule(id=name,name=one("name",name),position=len(cfg.security_policies)+1,source_zones=values.get("srcintf",[]),destination_zones=values.get("dstintf",[]),sources=values.get("srcaddr",["any"]),destinations=values.get("dstaddr",["any"]),services=values.get("service",["any"]),action=one("action","deny"),enabled=one("status","enable")=="enable",description=one("comments"),provenance=p,vendor_extensions=extensions); cfg.security_policies.append(rule)
-                if one("nat","disable")=="enable": cfg.nat_policies.append(NatRule(id=f"policy-nat-{name}",name=f"Policy NAT {rule.name}",type="dynamic_pat",original_source=rule.sources,translated_source=values.get("poolname",["interface"]),status="PARTIAL",provenance=p,vendor_extensions={"policy":name,"ippool":one("ippool","disable")}))
-            elif section == "firewall vip": cfg.nat_policies.append(NatRule(id=f"vip-{name}",name=name,type="destination_nat",original_destination=values.get("extip",[]),translated_destination=values.get("mappedip",[]),status="PARTIAL",provenance=p,vendor_extensions={**extensions,**{k:v for k,v in values.items() if k in {"extintf","portforward","extport","mappedport","protocol"}}}))
+                profiles=[f"{key}={one(key)}" for key in ("utm-status","profile-protocol-options","ssl-ssh-profile","av-profile","webfilter-profile","dnsfilter-profile","ips-sensor","application-list","profile-group") if key in values]
+                generic=lambda refs:["any" if ref.casefold()=="all" else ref for ref in refs]
+                rule=SecurityRule(id=name,name=one("name",name),position=len(cfg.security_policies)+1,source_zones=values.get("srcintf",[]),destination_zones=values.get("dstintf",[]),sources=generic(values.get("srcaddr",["any"])),destinations=generic(values.get("dstaddr",["any"])),services=generic(values.get("service",["any"])),action=one("action","deny"),enabled=one("status","enable")=="enable",log_end=one("logtraffic","disable") not in {"disable","none"},description=one("comments"),provenance=p,vendor_extensions={**extensions,"security_profiles":profiles}); cfg.security_policies.append(rule)
+                if one("nat","disable")=="enable": cfg.nat_policies.append(NatRule(id=f"policy-nat-{name}",name=f"Policy NAT {rule.name}",type="dynamic_pat",source_zones=rule.source_zones,destination_zones=rule.destination_zones,original_source=rule.sources,translated_source=values.get("poolname",["interface"]),status="PARTIAL",provenance=p,vendor_extensions={"policy":name,"ippool":one("ippool","disable"),**({"manual_review":"Central NAT behavior is not automatically migrated."} if cfg.metadata["central_nat"] else {}),**({"manual_review":"IP-pool translated-address semantics are not fully represented."} if one("ippool","disable")=="enable" else {})}))
+            elif section == "firewall vip":
+                portforward=one("portforward","disable")=="enable"; protocol=one("protocol","tcp").lower()
+                external=one("extport"); service={"80":"service-http","443":"service-https"}.get(external)
+                reason="VIP protocol or port translation is incomplete." if portforward and (protocol!="tcp" or not service or not values.get("mappedport")) else None
+                cfg.nat_policies.append(NatRule(id=f"vip-{name}",name=name,type="destination_nat",source_zones=values.get("extintf",[]),original_source=["any"],original_destination=values.get("extip",[]),translated_destination=values.get("mappedip",[]),original_service=[service] if portforward and service else [],translated_service=values.get("mappedport",[]) if portforward else [],status="PARTIAL",provenance=p,vendor_extensions={**extensions,"protocol":protocol,"portforward":portforward,**({"manual_review":reason} if reason else {})}))
             elif section == "router static": cfg.static_routes.append(StaticRoute(id=f"route-{name}",name=f"route {name}",destination=self._network(values.get("dst",["0.0.0.0","0.0.0.0"])),next_hop=one("gateway","0.0.0.0"),interface=one("device"),distance=int(one("distance",10)),metric=int(one("priority",0)),enabled=one("status","enable")=="enable",provenance=p,vendor_extensions=extensions))
         except (ValueError, IndexError) as exc: self._unparsed(cfg,line,section,"\n".join(item["raw"]),f"Invalid value: {exc}",Severity.ERROR)
-        for key in extensions: self._unparsed(cfg,line,section,f"set {key} {' '.join(values[key])}","Unsupported field preserved",Severity.INFO)
+        for key in extensions:
+            if key in values: self._unparsed(cfg,line,section,f"set {key} {' '.join(values[key])}","Unsupported field preserved",Severity.INFO)
     def _network(self, values):
         if len(values)<2: raise ValueError("missing address mask")
         return str(ipaddress.ip_network(f"{values[0]}/{values[1]}",strict=False))
+    def _ports(self, values):
+        source=[]; destination=[]
+        for value in values:
+            parts=value.split(":",1); destination.append(parts[0]); source.extend(parts[1:] if len(parts)>1 and parts[1]!="0-65535" else [])
+        return source,destination
     def _unparsed(self,cfg,line,section,raw,reason,severity=Severity.WARNING):
         cfg.unparsed_constructs.append(UnparsedConstruct(vendor=self.vendor,section=section,line_number=line,raw_text=raw,reason=reason,severity=severity)); cfg.warnings.append(ParseIssue(severity=severity,vendor=self.vendor,section=section,line=line,message=reason,raw_text=raw))
     def _references(self,cfg):

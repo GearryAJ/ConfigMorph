@@ -8,7 +8,7 @@ Convert-In is a fully local, open-source firewall configuration analysis, visual
 - a normalized vendor-neutral firewall model
 - object and policy dependency visualization
 - configuration and impact analysis
-- Cisco ASA → PAN-OS migration assistance
+- Cisco ASA and FortiGate → PAN-OS migration assistance
 - semantic migration review
 - candidate PAN-OS set-command generation
 
@@ -35,6 +35,8 @@ Sanitized screenshots are planned for `docs/images/overview.png`, `visualize.png
 | Analysis | Impact analysis, potential shadowing | MVP |
 | Visualization | Policy graph, object dependencies, impact scope | MVP |
 | Migration | Cisco ASA → PAN-OS | Candidate generation |
+| Migration | FortiGate → PAN-OS | Alpha / candidate |
+| Migration | PAN-OS → FortiGate | Not implemented |
 | Target output | PAN-OS set commands | Engineer review required |
 
 Coverage is intentionally bounded by tests. Convert-In does **not** claim full vendor conversion.
@@ -128,6 +130,7 @@ node --check app/static/js/app.js
 - outbound ACL migration
 - VPN and dynamic routing migration
 - advanced vendor security profiles
+- FortiGate central NAT, multiple VDOM flattening, SD-WAN, and advanced VIP behavior
 - IPv6 topology limitations
 - device-level validation and live deployment
 
@@ -139,11 +142,11 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes. Never include
 
 ## Release
 
-Current version: **0.1.0-alpha.1**. Alpha software; not production-ready. See [CHANGELOG.md](CHANGELOG.md).
+Current development version: **0.2.0-alpha.1**. Alpha software; not production-ready. No release or tag has been created. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap
 
-Next recommended phase: independent PAN-OS lab validation and additional sanitized semantic fixtures. FortiGate rendering remains unimplemented.
+Next recommended phase: independent PAN-OS lab validation, richer FortiGate NAT fixtures, and usability hardening. PAN-OS → FortiGate remains unimplemented.
 
 ## License
 

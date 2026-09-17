@@ -1,0 +1,4 @@
+set vsys vsys1 address HOST ip-netmask 10.0.0.1/32
+set vsys vsys1 address NET ip-netmask 10.0.1.0/24
+set vsys vsys1 address RANGE ip-range 10.0.2.1-10.0.2.9
+set vsys vsys1 address FQDN fqdn example.invalid

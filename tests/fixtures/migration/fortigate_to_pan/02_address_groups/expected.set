@@ -1,0 +1,3 @@
+set vsys vsys1 address A ip-netmask 10.0.0.1/32
+set vsys vsys1 address-group INNER static A
+set vsys vsys1 address-group OUTER static INNER

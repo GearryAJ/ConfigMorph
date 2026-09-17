@@ -11,7 +11,7 @@ from app.core.graph import GraphScope, GraphSummary, serialize_graph, resolve_no
 from app.core.parsing import detect_vendor, parse_config
 from app.persistence.repositories import create_project
 from app.persistence.repositories.projects import get_project
-from app.core.migration import MigrationMappings, MigrationPlanner, build_report, default_mappings
+from app.core.migration import MigrationMappings, MigrationPlanner, build_report, default_mappings, migration_pair
 from app.core.renderers import PaloAltoRenderer
 from app.core.migration.validation import validate_candidate
 from app.core.review import ReviewDecision,build_review,export_package,load_decisions,save_decisions,validate_migration
@@ -27,6 +27,8 @@ def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_v
     try: vendor = detected.vendor if source_vendor == "auto" else Vendor(source_vendor)
     except ValueError: raise HTTPException(400, "Unsupported source vendor")
     if vendor is Vendor.UNKNOWN: raise HTTPException(422, "Vendor confidence too low; select source vendor manually")
+    try: migration_pair(vendor,target_vendor)
+    except ValueError: raise HTTPException(422,"Unsupported migration pair")
     cfg = parse_config(source, vendor)
     report, graph = AnalysisEngine().analyze(cfg)
     project = str(uuid4()); root = (settings.workspace_dir / project).resolve(); base = settings.workspace_dir.resolve()
@@ -99,7 +101,9 @@ def project_references(project_id:str,object_id:str):
 
 def _migration(project_id):
     cfg,_=_artifacts(project_id); project=get_project(project_id)
-    if not project or project.source_vendor!=Vendor.ASA.value or project.target_vendor!=Vendor.PALO_ALTO.value: raise HTTPException(422,"Only Cisco ASA to Palo Alto migration is supported")
+    if not project: raise HTTPException(404,"Project not found")
+    try: migration_pair(project.source_vendor,project.target_vendor)
+    except ValueError: raise HTTPException(422,"Unsupported migration pair")
     root=(settings.workspace_dir/project_id/"migration").resolve(); base=settings.workspace_dir.resolve()
     if base not in root.parents: raise HTTPException(400,"Invalid workspace path")
     root.mkdir(exist_ok=True)
@@ -122,7 +126,9 @@ def _plan(project_id):
     return plan,root
 
 @router.get("/projects/{project_id}/migration/compatibility")
-def migration_compatibility(project_id:str): return _plan(project_id)[0].compatibility
+def migration_compatibility(project_id:str):
+    plan=_plan(project_id)[0]
+    return {"source_vendor":plan.source_vendor,"target_vendor":plan.target_vendor,"items":plan.compatibility}
 
 @router.post("/projects/{project_id}/migration/plan")
 def migration_plan(project_id:str): return _plan(project_id)[0]

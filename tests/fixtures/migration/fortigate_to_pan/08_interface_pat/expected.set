@@ -1,0 +1,12 @@
+set vsys vsys1 rulebase security rules 1 from trust
+set vsys vsys1 rulebase security rules 1 to untrust
+set vsys vsys1 rulebase security rules 1 source any
+set vsys vsys1 rulebase security rules 1 destination any
+set vsys vsys1 rulebase security rules 1 service any
+set vsys vsys1 rulebase security rules 1 action allow
+set vsys vsys1 rulebase nat rules Policy_NAT_1 from trust
+set vsys vsys1 rulebase nat rules Policy_NAT_1 to untrust
+set vsys vsys1 rulebase nat rules Policy_NAT_1 source any
+set vsys vsys1 rulebase nat rules Policy_NAT_1 destination any
+set vsys vsys1 rulebase nat rules Policy_NAT_1 service any
+set vsys vsys1 rulebase nat rules Policy_NAT_1 source-translation dynamic-ip-and-port interface-address interface

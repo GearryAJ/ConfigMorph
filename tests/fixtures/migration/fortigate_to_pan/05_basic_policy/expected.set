@@ -1,0 +1,6 @@
+set vsys vsys1 rulebase security rules 1 from trust
+set vsys vsys1 rulebase security rules 1 to untrust
+set vsys vsys1 rulebase security rules 1 source any
+set vsys vsys1 rulebase security rules 1 destination any
+set vsys vsys1 rulebase security rules 1 service any
+set vsys vsys1 rulebase security rules 1 action allow

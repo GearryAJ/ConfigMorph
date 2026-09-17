@@ -1,0 +1,30 @@
+[
+  {
+    "entity_type": "interface",
+    "source_name": "lan",
+    "status": "MANUAL_REVIEW",
+    "reasons": [
+      "Source interfaces are mapping-only; no interface command generated."
+    ]
+  },
+  {
+    "entity_type": "interface",
+    "source_name": "wan1",
+    "status": "MANUAL_REVIEW",
+    "reasons": [
+      "Source interfaces are mapping-only; no interface command generated."
+    ]
+  },
+  {
+    "entity_type": "security_policy",
+    "source_name": "1",
+    "status": "SUPPORTED",
+    "reasons": []
+  },
+  {
+    "entity_type": "nat_policy",
+    "source_name": "Policy NAT 1",
+    "status": "SUPPORTED",
+    "reasons": []
+  }
+]

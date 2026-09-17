@@ -1,0 +1,24 @@
+[
+  {
+    "entity_type": "interface",
+    "source_name": "lan",
+    "status": "MANUAL_REVIEW",
+    "reasons": [
+      "Source interfaces are mapping-only; no interface command generated."
+    ]
+  },
+  {
+    "entity_type": "interface",
+    "source_name": "wan1",
+    "status": "MANUAL_REVIEW",
+    "reasons": [
+      "Source interfaces are mapping-only; no interface command generated."
+    ]
+  },
+  {
+    "entity_type": "nat_policy",
+    "source_name": "VIP-HTTPS",
+    "status": "SUPPORTED",
+    "reasons": []
+  }
+]

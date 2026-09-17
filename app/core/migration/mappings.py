@@ -16,7 +16,8 @@ def normalize_names(entities):
 
 def default_mappings(cfg):
     from .models import InterfaceMapping
-    return MigrationMappings(interfaces=[InterfaceMapping(source_interface=x.name,source_nameif=x.zone,suggested_zone=x.zone) for x in cfg.interfaces])
+    memberships={interface:zone.name for zone in cfg.zones for interface in zone.interfaces}
+    return MigrationMappings(interfaces=[InterfaceMapping(source_interface=x.name,source_nameif=x.zone or memberships.get(x.name) or x.name,suggested_zone=x.zone or memberships.get(x.name) or x.name) for x in cfg.interfaces])
 
 def confirmed_maps(mappings:MigrationMappings):
     interfaces={x.source_interface:x for x in mappings.interfaces if x.confirmed}

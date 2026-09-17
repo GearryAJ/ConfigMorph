@@ -1,0 +1,8 @@
+{
+  "case": "04_service_groups",
+  "candidate_expected": true,
+  "entities": 5,
+  "generated": 3,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

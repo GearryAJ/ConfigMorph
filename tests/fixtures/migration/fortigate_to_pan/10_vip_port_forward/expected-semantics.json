@@ -1,0 +1,8 @@
+{
+  "case": "10_vip_port_forward",
+  "candidate_expected": true,
+  "entities": 3,
+  "generated": 1,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

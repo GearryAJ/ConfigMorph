@@ -33,6 +33,9 @@ class PaloAltoRenderer:
                         for value in d[field]: emit(e,"rulebase","nat","rules",n,field,value)
                     emit(e,"rulebase","nat","rules",n,"service",d["service"])
                     if d["type"]=="dynamic_pat": emit(e,"rulebase","nat","rules",n,"source-translation","dynamic-ip-and-port","interface-address","interface")
+                    elif d["type"]=="destination_nat":
+                        emit(e,"rulebase","nat","rules",n,"destination-translation","translated-address",d["translated_destination"][0])
+                        if d.get("translated_service"): emit(e,"rulebase","nat","rules",n,"destination-translation","translated-port",d["translated_service"])
                     else:
                         for value in d["translated_source"]: emit(e,"rulebase","nat","rules",n,"source-translation","static-ip","translated-address",value)
                 elif e.entity_type=="route":

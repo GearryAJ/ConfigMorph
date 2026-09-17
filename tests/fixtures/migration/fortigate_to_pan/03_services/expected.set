@@ -1,0 +1,3 @@
+set vsys vsys1 service TCP-443 protocol tcp port 443
+set vsys vsys1 service UDP-53 protocol udp port 53
+set vsys vsys1 service RANGE protocol tcp port 8000-8080

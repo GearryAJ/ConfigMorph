@@ -1,0 +1,6 @@
+set vsys vsys1 rulebase nat rules VIP from untrust
+set vsys vsys1 rulebase nat rules VIP to trust
+set vsys vsys1 rulebase nat rules VIP source any
+set vsys vsys1 rulebase nat rules VIP destination 203.0.113.10
+set vsys vsys1 rulebase nat rules VIP service any
+set vsys vsys1 rulebase nat rules VIP destination-translation translated-address 10.0.0.10

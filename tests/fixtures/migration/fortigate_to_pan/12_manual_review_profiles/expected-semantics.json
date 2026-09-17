@@ -1,0 +1,8 @@
+{
+  "case": "12_manual_review_profiles",
+  "candidate_expected": false,
+  "entities": 3,
+  "generated": 0,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

@@ -1,0 +1,8 @@
+{
+  "case": "16_vdom_manual_review",
+  "candidate_expected": false,
+  "entities": 4,
+  "generated": 0,
+  "source_vendor": "fortigate",
+  "target_vendor": "paloalto"
+}

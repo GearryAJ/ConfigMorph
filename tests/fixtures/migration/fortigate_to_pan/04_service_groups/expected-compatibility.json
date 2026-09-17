@@ -1,0 +1,36 @@
+[
+  {
+    "entity_type": "interface",
+    "source_name": "lan",
+    "status": "MANUAL_REVIEW",
+    "reasons": [
+      "Source interfaces are mapping-only; no interface command generated."
+    ]
+  },
+  {
+    "entity_type": "interface",
+    "source_name": "wan1",
+    "status": "MANUAL_REVIEW",
+    "reasons": [
+      "Source interfaces are mapping-only; no interface command generated."
+    ]
+  },
+  {
+    "entity_type": "service",
+    "source_name": "TCP-443",
+    "status": "SUPPORTED",
+    "reasons": []
+  },
+  {
+    "entity_type": "service",
+    "source_name": "UDP-53",
+    "status": "SUPPORTED",
+    "reasons": []
+  },
+  {
+    "entity_type": "service_group",
+    "source_name": "MIXED",
+    "status": "SUPPORTED",
+    "reasons": []
+  }
+]
