@@ -41,5 +41,5 @@ def test_fortigate_offline_workflow(page,live_server):
     assert not errors,errors
 
 def test_malformed_is_recoverable(page,live_server):
-    page.goto(live_server); page.locator("#target-version").select_option("11.1"); page.locator("#source").fill("not a firewall configuration"); page.get_by_role("button",name="Analyze & Convert").click()
+    page.goto(live_server); page.get_by_role("tab",name="Paste").click(); page.locator("#source").fill("not a firewall configuration"); page.get_by_role("button",name="Analyze & Convert").click()
     page.wait_for_timeout(300); assert page.locator("#source").input_value()=="not a firewall configuration"

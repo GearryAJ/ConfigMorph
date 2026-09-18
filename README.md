@@ -32,7 +32,11 @@ Inputs are limited to 5 MiB, PAN XML uses `defusedxml`, configuration bodies are
 
 ## Screenshots
 
-Sanitized screenshots are planned for `docs/images/overview.png`, `visualize.png`, `analysis.png`, `migration.png`, and `review.png`. They are intentionally omitted until captured from synthetic data; no broken images are embedded.
+Screenshots use the synthetic `examples/fortigate/basic.conf` fixture.
+
+| Import | Overview |
+|---|---|
+| ![Compact file import workspace](docs/images/import.png) | ![Synthetic configuration analysis overview](docs/images/overview.png) |
 
 ## Support matrix
 
@@ -152,7 +156,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes. Never include
 
 ## Release
 
-Current development version: **0.2.0-alpha.1**. Alpha software; not production-ready. No release or tag has been created. See [CHANGELOG.md](CHANGELOG.md).
+Current development version: **0.2.0-alpha.1**. The corresponding prerelease is published. Alpha software; not production-ready. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap
 

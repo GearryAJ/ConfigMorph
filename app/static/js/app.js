@@ -1,12 +1,19 @@
-const fileInput=document.getElementById('file'),sourceInput=document.getElementById('source'),fileStatus=document.getElementById('file-status'),maxFileBytes=5*1024*1024;
-async function selectFile(file){if(!file)return;if(file.size>maxFileBytes){fileInput.value='';fileStatus.textContent='File exceeds the 5 MiB limit. Select a smaller configuration.';return}sourceInput.value=await file.text();fileStatus.textContent=`Selected: ${file.name} (${file.size} bytes). Data remains local.`}
+const fileInput=document.getElementById('file'),sourceInput=document.getElementById('source'),fileStatus=document.getElementById('file-status'),sourceSize=document.getElementById('source-size'),submitButton=document.getElementById('analyze-submit'),maxFileBytes=5*1024*1024;
+function updateInputState(){const bytes=new Blob([sourceInput.value]).size;sourceSize.textContent=`${sourceInput.value.length.toLocaleString()} characters · ${bytes.toLocaleString()} bytes`;submitButton.disabled=!sourceInput.value.trim()}
+function setInputMode(mode){for(const name of ['file','paste']){const selected=name===mode,button=document.getElementById(`${name}-mode`);button.classList.toggle('active',selected);button.setAttribute('aria-selected',selected);document.getElementById(`${name}-panel`).hidden=!selected}if(mode==='paste')sourceInput.focus()}
+async function selectFile(file){if(!file)return;if(file.size>maxFileBytes){fileInput.value='';sourceInput.value='';fileStatus.textContent='File exceeds the 5 MiB limit. Select a smaller configuration.';updateInputState();return}sourceInput.value=await file.text();fileStatus.textContent=`${file.name} · ${(file.size/1024).toFixed(1)} KB`;updateInputState()}
 fileInput.addEventListener('change',event=>selectFile(event.target.files[0]));
-document.getElementById('clear-file').addEventListener('click',()=>{fileInput.value='';sourceInput.value='';fileStatus.textContent='Cleared. Select another file or paste configuration text.';sourceInput.focus()});
+document.getElementById('file-mode').addEventListener('click',()=>setInputMode('file'));
+document.getElementById('paste-mode').addEventListener('click',()=>setInputMode('paste'));
+document.getElementById('clear-file').addEventListener('click',()=>{fileInput.value='';sourceInput.value='';fileStatus.textContent='No file selected.';updateInputState();fileInput.focus()});
+document.getElementById('clear-paste').addEventListener('click',()=>{sourceInput.value='';updateInputState();sourceInput.focus()});
+sourceInput.addEventListener('input',updateInputState);
 const dropZone=document.getElementById('drop-zone');
 for(const type of ['dragenter','dragover'])dropZone.addEventListener(type,event=>{event.preventDefault();dropZone.classList.add('dragging')});
 for(const type of ['dragleave','drop'])dropZone.addEventListener(type,event=>{event.preventDefault();dropZone.classList.remove('dragging')});
 dropZone.addEventListener('drop',event=>selectFile(event.dataTransfer.files[0]));
-document.getElementById('target-version').addEventListener('change',event=>{document.getElementById('target-warning').textContent=event.target.value==='12.1'?'PAN-OS 12.1 candidate paths are limited and version-not-verified. Select 11.1 for the supported alpha workflow.':'PAN-OS 11.1 local-firewall candidate scope selected.'});
+document.getElementById('target-version').addEventListener('change',event=>{document.getElementById('target-warning').textContent=event.target.value==='12.1'?'Limited · version not verified. Select PAN-OS 11.1 for supported candidate scope.':'PAN-OS 11.1 candidate scope.'});
+new MutationObserver(()=>document.body.classList.toggle('has-results',!!document.querySelector('.results'))).observe(document.getElementById('result'),{childList:true});
 document.addEventListener('submit',async event=>{const form=event.target.closest('.impact-search');if(!form)return;event.preventDefault();const output=form.nextElementSibling;output.textContent='Loading…';const id=form.elements.object.value;const response=await request(`/api/projects/${encodeURIComponent(form.dataset.project)}/impact/${encodeURIComponent(id)}`);if(!response.ok){output.textContent='Object not found or ambiguous.';return}const impact=await response.json();output.replaceChildren();const heading=document.createElement('p');heading.textContent=`${impact.object.name}: ${impact.impact_level} impact — used by ${impact.recursive_references} objects`;output.append(heading);for(const [label,key] of [['Security Policies','security_policies'],['NAT Policies','nat_policies'],['Groups','groups'],['Routes','routes']]){const line=document.createElement('p');line.textContent=`${label}: ${impact[key].length}`;output.append(line)}});
 
 let graph,graphRoot,searchTimer;
