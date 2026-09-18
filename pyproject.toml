@@ -37,4 +37,4 @@ version = {attr = "app.__version__"}
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-markers = ["browser: Playwright smoke tests"]
+markers = ["browser: Playwright smoke tests", "pan_lab: opt-in isolated PAN-OS lab tests"]

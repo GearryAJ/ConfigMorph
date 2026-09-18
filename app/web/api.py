@@ -17,6 +17,7 @@ from app.core.migration.validation import validate_candidate
 from app.core.review import ReviewDecision,build_review,export_package,load_decisions,save_decisions,validate_migration
 from app.core.versions import resolve_context
 from app.core.versions.models import VersionContext
+from app.core.pan_lab import PanLabValidationResult
 
 router = APIRouter(prefix="/api")
 
@@ -196,11 +197,24 @@ def migration_validation(project_id:str):
 def run_migration_validation(project_id:str):
     cfg,_,root,plan,lines,_,review=_current_review(project_id); validation=validate_migration(cfg,plan,review,lines); (root/"validation-report.json").write_text(validation.model_dump_json(indent=2),encoding="utf-8"); return validation
 
+@router.get("/projects/{project_id}/migration/pan-lab-validation")
+def pan_lab_validation(project_id:str):
+    _,_,root=_migration(project_id); path=root/"validation"/"pan-lab-validation.json"
+    if path.is_file(): return json.loads(path.read_text(encoding="utf-8"))
+    return {"status":"READY" if settings.pan_lab_validation_enabled else "NOT_CONFIGURED","message":"Live transport requires a verified PAN-OS 11.1 candidate restore mechanism." if settings.pan_lab_validation_enabled else "PAN-OS lab validation is disabled."}
+
+@router.post("/projects/{project_id}/migration/pan-lab-validation")
+def run_pan_lab_validation(project_id:str):
+    _migration(project_id)
+    if not settings.pan_lab_validation_enabled: raise HTTPException(409,"PAN-OS lab validation is disabled")
+    raise HTTPException(501,"VERSION_NOT_VERIFIED: live candidate restore mechanism is not implemented")
+
 @router.get("/projects/{project_id}/migration/review-package")
 def migration_review_package(project_id:str):
     cfg,mappings,root,plan,lines,report,review=_current_review(project_id); validation=validate_migration(cfg,plan,review,lines)
     if validation.status=="BLOCKING": raise HTTPException(409,"Final review package blocked by validation; candidate remains available")
-    data=export_package("\n".join(lines)+("\n" if lines else ""),report.model_dump(mode="json"),review,validation,mappings,report.security_rule_ordering)
+    lab_path=root/"validation"/"pan-lab-validation.json"; lab=PanLabValidationResult.model_validate_json(lab_path.read_text(encoding="utf-8")) if lab_path.is_file() else None
+    data=export_package("\n".join(lines)+("\n" if lines else ""),report.model_dump(mode="json"),review,validation,mappings,report.security_rule_ordering,lab)
     return Response(data,media_type="application/zip",headers={"Content-Disposition":'attachment; filename="migration-review-package.zip"'})
 
 @router.get("/projects/{project_id}/migration/report")

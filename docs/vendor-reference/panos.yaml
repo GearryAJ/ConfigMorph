@@ -1,5 +1,26 @@
 [
   {
+    "id": "PANOS-11.1-CLI-VALIDATE",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "ADMIN_GUIDE",
+    "title": "Commit Configuration Changes", "topic": "Non-committing full candidate validation and asynchronous validation jobs",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/commit-configuration-changes",
+    "verified_at": "2026-09-18", "notes": "Documents `validate full` separately from commit and `show jobs id`."
+  },
+  {
+    "id": "PANOS-11.1-CLI-LOAD-TEXT",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "ADMIN_GUIDE",
+    "title": "Load Configuration Settings from a Text File", "topic": "Applying ordered set-format commands to candidate configuration",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/load-configurations",
+    "verified_at": "2026-09-18", "notes": "Documents candidate mutation. Snapshot restoration was not established; live adapter remains blocked."
+  },
+  {
+    "id": "PANOS-11.1-XML-API-ACTIONS",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "API_REFERENCE",
+    "title": "PAN-OS XML API Request Types and Actions", "topic": "Candidate configuration operations and operational validation request category",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/commit-configuration-api",
+    "verified_at": "2026-09-18", "notes": "Exact reversible load workflow not established; no XML transport implemented."
+  },
+  {
     "id": "PANOS-11.1-SECURITY-POLICY",
     "vendor": "paloalto",
     "product": "PAN-OS",
