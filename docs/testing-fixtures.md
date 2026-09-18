@@ -10,7 +10,7 @@ Phase N uses deterministic, synthetic ASA 9.20 and FortiOS 7.4 configurations. N
 | MEDIUM | 250 | 100 | 250 |
 | LARGE | 1,000 | 500 | 1,000 |
 
-`tests/realistic_fixtures.py` covers interfaces, VLANs/zones, objects, nested groups, services, ordered policies, disabled entries, routes, unresolved and unused objects, name collisions, NAT/VIP review input, and explicit unsupported syntax. `tests/test_realistic_regression.py` compares semantic models after excluding `generated_at`; failures identify vendor, tier, stage, and invariant. Malformed cases cover truncation, invalid masks, malformed quoting, unknown commands, missing references, and unfinished groups.
+`app/testing/realistic_fixtures.py` covers interfaces, VLANs/zones, objects, nested groups, services, ordered policies, disabled entries, routes, unresolved and unused objects, name collisions, NAT/VIP review input, and explicit unsupported syntax. The module is development-only and is never imported by application startup or request handling. `tests/test_realistic_regression.py` compares semantic models after excluding `generated_at`; failures identify vendor, tier, stage, and invariant. Malformed cases cover truncation, invalid masks, malformed quoting, unknown commands, missing references, and unfinished groups.
 
 ## Commands
 
@@ -24,4 +24,4 @@ pytest -q tests/browser
 
 Goldens are semantic assertions, not raw snapshots. Update generators only with synthetic RFC1918 data. Review normalized entity counts, unsupported accounting, policy order, NAT absence from candidate commands, and ZIP allowlist before accepting an intentional change. Never update expected behavior merely to clear a failure.
 
-The optional browser job currently records the malformed-input check as passing. The happy path is an explicit expected failure because the vendored HTMX asset does not initialize under the current CSP in Chromium. API-level workflow coverage remains mandatory; do not make the optional browser job required until that infrastructure issue is resolved.
+Browser smoke requires the `browser` development extra plus local Chromium. The vendored `htmx.min.js` is the documented local form adapter, not upstream HTMX; it intentionally exposes no `window.htmx` global and runs without inline script or evaluation. Browser tests preserve the local-only CSP, require local assets to load, reject unexpected console/page errors, and reject external traffic.

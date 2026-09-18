@@ -8,7 +8,7 @@ from app.core.models import Vendor
 from app.core.parsing import parse_config
 from app.core.renderers import PaloAltoRenderer
 from app.core.versions import resolve_context
-from tests.realistic_fixtures import asa,fortigate
+from app.testing.realistic_fixtures import asa,fortigate
 
 def run(vendor,text):
     cfg=parse_config(text,vendor); AnalysisEngine().analyze(cfg); mappings=default_mappings(cfg)

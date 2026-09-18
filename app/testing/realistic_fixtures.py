@@ -1,4 +1,4 @@
-"""Deterministic synthetic production-shape fixtures. No customer data."""
+"""Development-only synthetic fixtures. Never imported by application runtime."""
 from dataclasses import dataclass
 
 @dataclass(frozen=True)

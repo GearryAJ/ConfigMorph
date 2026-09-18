@@ -6,6 +6,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Changed
 
+- Fixed Phase N.1 benchmark entrypoint imports and corrected browser smoke expectations for the CSP-compatible local form adapter. Migration scope is unchanged.
 - Added Phase N synthetic SMALL/MEDIUM/LARGE ASA and FortiOS fixture regression, deterministic semantic comparisons, malformed-input recovery checks, stage benchmarks, and optional offline Playwright smoke coverage. Migration scope is unchanged.
 - Added official-vendor documentation provenance, explicit OS version profiles, conservative capability checks, version validation, and review/export provenance for ASA/FortiOS to PAN-OS migration.
 - Downgraded previously optimistic migration claims where source or target version documentation and tested syntax evidence are incomplete.

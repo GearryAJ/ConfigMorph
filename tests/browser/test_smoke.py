@@ -1,23 +1,44 @@
 from pathlib import Path
+from urllib.parse import urlparse
 import pytest
 
 pytestmark=pytest.mark.browser
 
 def test_fortigate_offline_workflow(page,live_server):
-    external=[]
-    page.on("request",lambda request: external.append(request.url) if not request.url.startswith(live_server) else None)
+    external=[]; errors=[]; assets={}; failed=[]
+    page.on("request",lambda request: external.append(request.url) if urlparse(request.url).scheme not in {"data","blob"} and urlparse(request.url).hostname not in {"127.0.0.1","localhost","::1"} else None)
+    page.on("console",lambda message: errors.append(f"console {message.type}: {message.text}") if message.type in {"error","warning"} else None)
+    page.on("pageerror",lambda error: errors.append(f"pageerror: {error}"))
+    page.on("response",lambda response: assets.update({urlparse(response.url).path:response.status}) if "/static/" in response.url else None)
+    page.on("response",lambda response: failed.append(f"{response.status} {response.url}") if response.status>=400 else None)
     page.goto(live_server)
-    if page.evaluate("() => typeof window.htmx") == "undefined": pytest.xfail("vendored HTMX does not initialize under the current CSP")
+    assert assets=={"/static/css/app.css":200,"/static/vendor/htmx/htmx.min.js":200,"/static/vendor/cytoscape/cytoscape.min.js":200,"/static/js/app.js":200}
     page.locator('[name="source_vendor"]').select_option("fortigate"); page.locator('[name="source_version"]').select_option("7.4"); page.locator("#target-version").select_option("11.1")
     page.locator("#file").set_input_files(str(Path("examples/fortigate/basic.conf").resolve()))
     page.wait_for_function("() => document.querySelector('#source').value.length > 0")
     page.get_by_role("button",name="Analyze & Convert").click(); page.locator(".results").wait_for()
-    assert "FortiGate" in page.locator(".results").inner_text(); page.get_by_role("tab",name="Migration").click()
+    assert "fortigate detected" in page.locator(".results").inner_text().lower(); page.get_by_role("tab",name="Migration").click()
     page.locator(".mapping-row").first.wait_for(); page.locator(".mapping-row input[name=target_interface]").evaluate_all("xs=>xs.forEach((x,i)=>x.value=`ethernet1/${i+1}`)")
     page.locator(".mapping-row input[name=target_zone]").evaluate_all("xs=>xs.forEach(x=>x.value=x.closest('.mapping-row').dataset.nameif)")
-    page.locator(".mapping-row input[name=confirmed]").check(); page.locator("#migration-mappings button[type=submit]").click()
-    page.locator("#migration-render").click(); page.locator("#migration-candidate").wait_for(); page.locator("#migration-validate").click()
-    assert not external
+    for checkbox in page.locator(".mapping-row input[name=confirmed]").all(): checkbox.check()
+    page.locator("#migration-mappings button[type=submit]").click()
+    page.locator("#migration-status").get_by_text("Mappings saved.").wait_for()
+    page.locator("#migration-generate").click(); page.locator("#migration-candidate").wait_for()
+    page.locator("#review-list button").first.wait_for()
+    while page.locator("#review-list button").count():
+        page.locator("#review-list button").first.click(); page.locator("#review-detail select").select_option("ACCEPTED")
+        with page.expect_response(lambda response:"/migration/review/" in response.url) as save_response: page.get_by_role("button",name="Save Engineer Review").click()
+        assert save_response.value.ok,save_response.value.text()
+        page.locator("#review-filters").select_option("NOT_REVIEWED")
+    with page.expect_response(lambda response:"/migration/validate" in response.url) as validation_response: page.locator("#migration-validate").click()
+    assert validation_response.value.ok,validation_response.value.text()
+    page.wait_for_function("() => document.querySelector('#validation-result').textContent !== 'Not run.'")
+    assert "BLOCKING" not in page.locator("#validation-result").inner_text()
+    with page.expect_download() as download: page.locator("#review-package").click()
+    assert download.value.suggested_filename.endswith(".zip")
+    assert not external,external
+    assert not failed,failed
+    assert not errors,errors
 
 def test_malformed_is_recoverable(page,live_server):
     page.goto(live_server); page.locator("#target-version").select_option("11.1"); page.locator("#source").fill("not a firewall configuration"); page.get_by_role("button",name="Analyze & Convert").click()

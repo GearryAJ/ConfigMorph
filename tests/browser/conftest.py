@@ -7,6 +7,7 @@ pytest.importorskip("pytest_playwright")
 def live_server():
     sock=socket.socket(); sock.bind(("127.0.0.1",0)); port=sock.getsockname()[1]; sock.close(); url=f"http://127.0.0.1:{port}"
     root=tempfile.mkdtemp(prefix="convert-browser-"); env={**os.environ,"FCS_DATA_DIR":root,"FCS_WORKSPACE_DIR":root+"/workspace"}
+    subprocess.run([sys.executable,"-m","alembic","upgrade","head"],env=env,check=True,capture_output=True,text=True)
     process=subprocess.Popen([sys.executable,"-m","uvicorn","app.main:app","--host","127.0.0.1","--port",str(port)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=env)
     for _ in range(50):
         try:

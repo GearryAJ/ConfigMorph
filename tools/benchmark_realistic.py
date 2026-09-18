@@ -6,7 +6,7 @@ from app.core.models import Vendor
 from app.core.parsing import parse_config
 from app.core.renderers import PaloAltoRenderer
 from app.core.versions import resolve_context
-from tests.realistic_fixtures import TIERS,asa,fortigate
+from app.testing.realistic_fixtures import TIERS,asa,fortigate
 
 def measure(vendor,builder,tier):
     text=builder(tier); tracemalloc.start(); total=time.perf_counter(); marks={}
