@@ -82,13 +82,14 @@ class MigrationPlanner:
             refs=x.original_source+x.original_destination+x.translated_source+x.translated_destination
             missing=[r for r in refs if r not in {"any","interface"} and r not in by_name and not self._ip_value(r)]
             subtype=("interface_address_pat" if x.type=="dynamic_pat" and x.translation_target=="INTERFACE_ADDRESS" or x.type=="dynamic_pat" and x.translated_source==["interface"] else "destination_port_translation" if x.type=="destination_nat" and x.translated_service else "destination_static_nat" if x.type=="destination_nat" else "dynamic_ip_and_port" if x.type=="dynamic_pat" else x.type)
+            route_outcome=next((o for o in mappings.nat_route_outcomes if o.nat_rule==x.id),None)
             if x.vendor_extensions.get("manual_review"): add(x,"nat_policy",S.MANUAL_REVIEW,None,x.vendor_extensions["manual_review"])
             elif x.identity: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Identity NAT is preserved but not rendered.")
             elif subtype in {"twice_nat","identity_nat","central_nat","ip_pool_snat"}: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"NAT subtype {subtype} is preserved but not rendered.")
             elif target_profile:
                 evidence=evidence_state(source_profile,target_profile,subtype)
                 yes=lambda value:"Verified" if value else "Not verified"
-                add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Target match semantics: {yes(evidence.target_match_semantics_documented)}; translated address semantics: {yes(evidence.target_translation_semantics_documented)}; destination-zone route-lookup semantics: {yes(evidence.route_lookup_semantics_documented)}; route outcome mapping: {yes(evidence.mapping_verified)}; ordering: {yes(evidence.ordering_verified)}; placement: {yes(evidence.placement_verified)}; result: MANUAL_REVIEW.")
+                add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Target match semantics: {yes(evidence.target_match_semantics_documented)}; translated address semantics: {yes(evidence.target_translation_semantics_documented)}; destination-zone route-lookup semantics: {yes(evidence.route_lookup_semantics_documented)}; explicit route outcome: {yes(bool(route_outcome and route_outcome.confirmed))}; ordering: {yes(evidence.ordering_verified)}; placement: {yes(evidence.placement_verified)}; result: MANUAL_REVIEW.")
             elif missing: add(x,"nat_policy",S.MANUAL_REVIEW,None,f"Unresolved NAT references: {', '.join(missing)}")
             elif required: add(x,"nat_policy",S.MANUAL_REVIEW,None,"Confirmed source and destination zone mappings are required.",required=required)
             else:

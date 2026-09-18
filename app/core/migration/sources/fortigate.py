@@ -21,10 +21,15 @@ class FortiGateSourceAdapter(MigrationSourceAdapter):
         policies = {str(rule.id): rule for rule in config.security_policies}
         for nat in config.nat_policies:
             policy = policies.get(str(nat.vendor_extensions.get("policy")))
+            if nat.type == "destination_nat" and not policy:
+                matches=[rule for rule in config.security_policies if nat.name in rule.destinations]
+                policy=matches[0] if len(matches)==1 else None
+                if len(matches)>1: nat.vendor_extensions["manual_review"]="VIP is referenced by multiple firewall policies; route outcome is ambiguous."
             if policy:
                 nat.source_zones = list(policy.source_zones)
                 nat.destination_zones = list(policy.destination_zones)
                 nat.position = policy.position
+                nat.vendor_extensions["policy"]=str(policy.id)
             if nat.type == "destination_nat" and not nat.destination_zones and len(nat.translated_destination) == 1:
                 try:
                     address=ipaddress.ip_address(nat.translated_destination[0]); matches=[i for i in config.interfaces if any(address in ipaddress.ip_network(network,strict=False) for network in i.ipv4)]

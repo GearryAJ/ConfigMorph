@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.migration import InterfaceMapping,MigrationMappings,MigrationPlanner
+from app.core.migration import InterfaceMapping,MigrationMappings,MigrationPlanner,NatRouteOutcome,NatRulePlacement
 from app.core.models import Vendor
 from app.core.parsing import parse_config
 from app.core.renderers import PaloAltoRenderer
@@ -94,7 +94,7 @@ end''',Vendor.FORTIGATE)
     plan=MigrationPlanner().plan(cfg,MAP,resolve_context("",Vendor.FORTIGATE,"7.4"),resolve_context("",Vendor.PALO_ALTO,"11.1"))
     reason=" ".join(next(x for x in plan.compatibility if x.entity_type=="nat_policy").reasons)
     assert "destination-zone route-lookup semantics: Verified" in reason
-    assert "route outcome mapping: Not verified" in reason
+    assert "explicit route outcome: Not verified" in reason
     assert "ordering: Not verified" in reason and "placement: Not verified" in reason
     assert not [x for x in plan.generate if x.entity_type=="nat_policy"]
 
@@ -109,3 +109,38 @@ def test_panos_121_does_not_inherit_nat_semantic_evidence():
     assert not state.target_match_semantics_documented
     assert not state.target_translation_semantics_documented
     assert not state.route_lookup_semantics_documented
+
+def test_nat_placement_and_route_outcome_contracts_are_explicit_but_do_not_enable_generation():
+    with pytest.raises(ValueError): NatRulePlacement(mode="BEFORE")
+    with pytest.raises(ValueError): NatRulePlacement(mode="TOP",anchor_rule="existing")
+    outcome=NatRouteOutcome(nat_rule="nat-3",nat_from_zone="untrust",nat_pre_translation_to_zone="untrust",security_post_translation_to_zone="trust",confirmed=True)
+    mappings=MAP.model_copy(update={"nat_rule_placement":NatRulePlacement(mode="BOTTOM"),"nat_route_outcomes":[outcome]})
+    cfg=parse_config("object network LAN\n subnet 10.0.0.0 255.255.255.0\n nat (inside,outside) dynamic interface\n",Vendor.ASA)
+    plan=MigrationPlanner().plan(cfg,mappings,resolve_context("",Vendor.ASA,"9.20"),resolve_context("",Vendor.PALO_ALTO,"11.1"))
+    assert not [x for x in plan.generate if x.entity_type=="nat_policy"]
+
+def test_asa_nat_effective_order_uses_section_then_source_sequence():
+    cfg=parse_config("object network LAN\n host 10.0.0.1\n nat (inside,outside) dynamic interface\nnat (inside,outside) source static LAN LAN\nnat (inside,outside) after-auto source dynamic LAN interface\n",Vendor.ASA)
+    adapted=__import__("app.core.migration.sources.cisco_asa",fromlist=["CiscoAsaSourceAdapter"]).CiscoAsaSourceAdapter().adapt(cfg)
+    assert [x.vendor_extensions["section"] for x in adapted.nat_policies]==[1,2,3]
+    assert [x.position for x in adapted.nat_policies]==[1,2,3]
+
+def test_fortigate_vip_uses_unique_referencing_policy_context():
+    cfg=parse_config('''#config-version=FGT60F-7.4.0
+config firewall policy
+ edit 7
+  set srcintf "outside"
+  set dstintf "inside"
+  set dstaddr "WEB"
+ next
+end
+config firewall vip
+ edit "WEB"
+  set extip 192.0.2.10
+  set mappedip 10.0.0.10
+ next
+end''',Vendor.FORTIGATE)
+    adapted=__import__("app.core.migration.sources.fortigate",fromlist=["FortiGateSourceAdapter"]).FortiGateSourceAdapter().adapt(cfg)
+    assert adapted.nat_policies[0].source_zones==["outside"]
+    assert adapted.nat_policies[0].destination_zones==["inside"]
+    assert adapted.nat_policies[0].vendor_extensions["policy"]=="7"

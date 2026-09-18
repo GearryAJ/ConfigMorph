@@ -35,10 +35,28 @@ class SecurityRulePlacement(BaseModel):
         if self.anchor_rule and not __import__("re").fullmatch(r"[A-Za-z0-9._-]+",self.anchor_rule): raise ValueError("invalid anchor rule")
         return self
 
+class NatRulePlacement(BaseModel):
+    mode:SecurityRulePlacementMode; anchor_rule:str|None=None
+    @model_validator(mode="after")
+    def anchor_contract(self):
+        needs_anchor=self.mode in {SecurityRulePlacementMode.BEFORE,SecurityRulePlacementMode.AFTER}
+        if needs_anchor != bool(self.anchor_rule): raise ValueError("BEFORE/AFTER requires anchor_rule; TOP/BOTTOM forbids it")
+        if self.anchor_rule and not __import__("re").fullmatch(r"[A-Za-z0-9._-]+",self.anchor_rule): raise ValueError("invalid anchor rule")
+        return self
+
+class NatRouteOutcome(BaseModel):
+    nat_rule:str; nat_from_zone:str; nat_pre_translation_to_zone:str; security_post_translation_to_zone:str; confirmed:bool=False
+    @field_validator("nat_rule","nat_from_zone","nat_pre_translation_to_zone","security_post_translation_to_zone")
+    @classmethod
+    def safe_name(cls,v):
+        if not v.strip() or not __import__("re").fullmatch(r"[A-Za-z0-9._-]+",v): raise ValueError("invalid NAT route outcome value")
+        return v
+
 class MigrationMappings(BaseModel):
     management_mode:TargetManagementMode=TargetManagementMode.LOCAL_FIREWALL
     vsys:str="vsys1"; device_group:str|None=None; rulebase_scope:RulebaseScope|None=None; virtual_router:str="default"
     security_rule_placement:SecurityRulePlacement|None=None
+    nat_rule_placement:NatRulePlacement|None=None; nat_route_outcomes:list[NatRouteOutcome]=Field(default_factory=list)
     interfaces:list[InterfaceMapping]=Field(default_factory=list)
     @model_validator(mode="before")
     @classmethod
@@ -55,6 +73,8 @@ class MigrationMappings(BaseModel):
     def panorama_context(self):
         if self.management_mode==TargetManagementMode.PANORAMA and not self.device_group: raise ValueError("Panorama requires device_group")
         if self.management_mode==TargetManagementMode.PANORAMA and not self.rulebase_scope: raise ValueError("Panorama requires rulebase_scope")
+        names=[x.nat_rule for x in self.nat_route_outcomes]
+        if len(names)!=len(set(names)): raise ValueError("duplicate NAT route outcome")
         return self
 
 class NameMapping(BaseModel):
