@@ -4,12 +4,11 @@ Convert-In is a local firewall configuration analysis, visualization, and migrat
 
 ## Migration workflow
 
-1. Import a synthetic or sanitized FortiGate/ASA configuration by drop, file picker, or paste.
-2. Confirm detected source OS version; select **PAN-OS 11.1 / LOCAL_FIREWALL**.
-3. Map source interfaces/contexts to target interfaces/zones. Confirm virtual router, vsys, security-rule placement, anchor when applicable.
-4. Select **Analyze & Convert**.
-5. Review generated, manual-review, unsupported, version-not-verified items. NAT remains review-only.
-6. Run application-level validation; export the candidate package.
+1. Drop or paste a synthetic or sanitized FortiGate/ASA configuration.
+2. Select **Analyze & Convert**. Confirm the detected source OS version and **PAN-OS 11.1 / LOCAL_FIREWALL** target.
+3. Map source interfaces/contexts to target interfaces/zones. Confirm virtual router and security-rule placement.
+4. Review generated, manual-review, unsupported, and version-not-verified items. NAT remains review-only.
+5. Run application-level validation. Export the candidate package.
 
 Generated output requires engineer review. No deployment or device validation occurs.
 

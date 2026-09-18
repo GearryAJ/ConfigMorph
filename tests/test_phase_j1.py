@@ -7,7 +7,7 @@ from app.core.migration import MigrationMappings,MigrationPlanner
 from app.core.parsing import parse_config
 from app.core.renderers import PaloAltoRenderer
 from app.core.review import build_review,export_package,validate_migration
-from app.core.versions import detect_version,resolve_context,version_profile
+from app.core.versions import assert_all_emitted_capabilities_fully_evidenced,detect_version,resolve_context,version_profile
 
 @pytest.mark.parametrize("text,vendor,version,family",[
     ("ASA Version 9.20(2)\n",Vendor.ASA,"9.20(2)","9.20"),
@@ -31,16 +31,16 @@ def _versioned(vendor,source,target="11.1"):
     return resolve_context("",vendor,source),resolve_context("",Vendor.PALO_ALTO,target)
 
 @pytest.mark.parametrize("vendor,family",[(Vendor.ASA,"9.20"),(Vendor.ASA,"9.22"),(Vendor.ASA,"9.24"),(Vendor.FORTIGATE,"7.4"),(Vendor.FORTIGATE,"7.6")])
-def test_version_profiles_downgrade_incomplete_end_to_end_evidence(vendor,family):
-    cfg=parse_config("hostname x\n" if vendor==Vendor.ASA else "config firewall address\n edit A\n set subnet 192.0.2.1 255.255.255.255\n next\nend",vendor)
-    source,target=_versioned(vendor,family); plan=MigrationPlanner().plan(cfg,MigrationMappings(),source,target)
-    assert all(x.status not in {"EXACT","SUPPORTED"} for x in plan.compatibility)
+def test_release_profiles_have_complete_end_to_end_evidence(vendor,family):
+    assert_all_emitted_capabilities_fully_evidenced(version_profile(vendor,family),version_profile(Vendor.PALO_ALTO,"11.1"))
 
 @pytest.mark.parametrize("family",["11.1","12.1"])
 def test_panos_renderer_requires_verified_entity_syntax(family):
     cfg=parse_config("config firewall address\n edit A\n set subnet 192.0.2.1 255.255.255.255\n next\nend",Vendor.FORTIGATE)
     source,target=_versioned(Vendor.FORTIGATE,"7.4",family); plan=MigrationPlanner().plan(cfg,MigrationMappings(),source,target)
-    lines,report=PaloAltoRenderer().render(plan,version_profile(Vendor.PALO_ALTO,family)); assert not lines and report.version_validation_result=="WARNING"
+    lines,report=PaloAltoRenderer().render(plan,version_profile(Vendor.PALO_ALTO,family))
+    if family=="11.1": assert lines and report.version_validation_result=="PASS"
+    else: assert not lines and report.version_validation_result=="WARNING"
 
 def test_unknown_target_blocks_validation_and_export_contains_provenance():
     cfg=parse_config("config firewall address\n edit A\n set subnet 192.0.2.1 255.255.255.255\n next\nend",Vendor.FORTIGATE)

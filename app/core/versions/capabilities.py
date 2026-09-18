@@ -1,7 +1,15 @@
 from .models import CapabilityStatus
 
 VERIFIED={CapabilityStatus.DOCUMENTED_IMPLEMENTED_TESTED}
+EMITTED_CAPABILITIES=("address","address_group","service","service_group","security_policy","route")
 def capability_verified(profile,name): return bool(profile and name in profile.capabilities and profile.capabilities[name].status in VERIFIED and profile.capabilities[name].documentation_refs)
+
+def emitted_capability_fully_evidenced(source_profile,target_profile,name):
+    return name in EMITTED_CAPABILITIES and capability_verified(source_profile,name) and capability_verified(target_profile,name) and source_profile.tested and target_profile.tested
+
+def assert_all_emitted_capabilities_fully_evidenced(source_profile,target_profile,names=EMITTED_CAPABILITIES):
+    missing=[name for name in names if not emitted_capability_fully_evidenced(source_profile,target_profile,name)]
+    if missing: raise ValueError(f"emitted capabilities lack complete evidence: {', '.join(missing)}")
 
 def evidence_state(source_profile,target_profile,name,command=None):
     source=source_profile.capabilities.get(name) if source_profile else None

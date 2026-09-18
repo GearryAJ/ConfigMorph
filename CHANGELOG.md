@@ -9,6 +9,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 - Added official-vendor documentation provenance, explicit OS version profiles, conservative capability checks, version validation, and review/export provenance for ASA/FortiOS to PAN-OS migration.
 - Downgraded previously optimistic migration claims where source or target version documentation and tested syntax evidence are incomplete.
 - Expanded focused official references; added structured evidence completeness, PAN command provenance/context, orphan-reference validation, and development-time documentation coverage reporting.
+- Closed emitted object, service, security-policy, and static-route evidence for ASA 9.20/9.22/9.24 and FortiOS 7.4/7.6 to PAN-OS 11.1; manual-review capabilities remain outside the release gate.
 - Corrected PAN-OS 11.1 local command roots, separated management context from CLI tokens, constrained serializer tokens, and retained NAT, Panorama, and PAN-OS 12.1 route blocks.
 - Added explicit security-rule placement and a documented, deterministic Configuration API move intent artifact; candidate set files remain set commands only.
 - Hardened the local import-to-export workflow, explicit PAN-OS 11.1 target selection, accessible file drop/picker controls, release package allowlist, and release-level source integration coverage.

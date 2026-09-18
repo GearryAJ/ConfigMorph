@@ -2,13 +2,14 @@ import pytest
 from app.core.migration.models import CompatibilityResult,CompatibilityStatus,MigrationMappings,MigrationPlan,PlannedEntity,RulebaseScope,TargetManagementMode
 from app.core.models import Vendor
 from app.core.renderers import PaloAltoRenderer
+from app.core.migration.validation import validate_candidate
 from app.core.renderers.paloalto import quote
 from app.core.versions import PROFILES
 
 REF="PANOS-11.1-CONFIGURE-CLI-HIERARCHY"
 
 def render(kind,data,name="safe_name",profile="panos-11.1"):
-    compatibility=CompatibilityResult(entity_id="e",entity_type=kind,source_name=name,status=CompatibilityStatus.SUPPORTED,capability_refs=[f"{profile}:{kind}"],documentation_refs=[REF],version_status="VERIFIED")
+    compatibility=CompatibilityResult(entity_id="e",entity_type=kind,source_name=name,status=CompatibilityStatus.SUPPORTED,capability_refs=[f"test-source:{kind}",f"{profile}:{kind}"],documentation_refs=[REF],version_status="VERIFIED")
     plan=MigrationPlan(source_vendor=Vendor.ASA,mappings=MigrationMappings(),compatibility=[compatibility],names=[],generate=[PlannedEntity(entity_id="e",entity_type=kind,target_name=name,data=data)])
     renderer=PaloAltoRenderer(); lines,report=renderer.render(plan,PROFILES[profile])
     return renderer,lines,report
@@ -49,3 +50,10 @@ def test_serializer_rejects_unsafe_tokens_without_quoting():
     with pytest.raises(ValueError): quote("unsafe name")
     _,lines,report=render("address",{"type":"host","value":"192.0.2.1/32"},name="unsafe name")
     assert not lines and "unsafe PAN-OS name" in report.errors[0]
+
+def test_candidate_validator_accepts_documented_local_firewall_roots():
+    assert validate_candidate([
+        "set address host ip-netmask 192.0.2.1/32",
+        "set rulebase security rules allow-web action allow",
+        "set network virtual-router default routing-table ip static-route default destination 0.0.0.0/0",
+    ])==[]

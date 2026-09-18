@@ -24,8 +24,8 @@ class PaloAltoRenderer:
         compatibility={x.entity_id:x for x in plan.compatibility}
         def emit(entity,*parts):
             evidence=compatibility[entity.entity_id]
-            if not evidence.documentation_refs: raise ValueError("command documentation provenance required")
             if not _NAME.fullmatch(entity.target_name): raise ValueError(f"unsafe PAN-OS name: {entity.target_name!r}")
+            if evidence.version_status!="VERIFIED" or len(evidence.capability_refs)<2 or not evidence.documentation_refs: raise ValueError("complete source/target capability evidence required")
             command=PanSetCommand(path=["set",*parts],entity_id=entity.entity_id,target_profile=target_profile.id,capability_id=evidence.capability_refs[-1],documentation_refs=evidence.documentation_refs,management_context=plan.mappings)
             command.text=" ".join(quote(token) for token in command.path+command.values)
             commands.append(command)

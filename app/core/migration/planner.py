@@ -5,7 +5,7 @@ from .compatibility import result
 from .mappings import confirmed_maps, normalize_names
 from .models import CompatibilityStatus as S, MigrationMappings, MigrationPlan, PlannedEntity
 from .registry import migration_pair
-from app.core.versions import capability_verified,evidence_state,version_profile
+from app.core.versions import emitted_capability_fully_evidenced,evidence_state,version_profile
 from app.core.versions.models import CapabilityStatus,VersionContext
 
 class MigrationPlanner:
@@ -22,7 +22,7 @@ class MigrationPlanner:
             capability={"nat_policy":getattr(entity,"type","nat_policy"),"route":"route"}.get(kind,kind)
             source_cap=source_profile.capabilities.get(capability) if source_profile else None; target_cap=target_profile.capabilities.get(capability) if target_profile else None
             refs=list(dict.fromkeys((source_cap.documentation_refs if source_cap else [])+(target_cap.documentation_refs if target_cap else [])))
-            version_status="VERIFIED" if capability_verified(source_profile,capability) and capability_verified(target_profile,capability) else "VERSION_NOT_VERIFIED"
+            version_status="VERIFIED" if emitted_capability_fully_evidenced(source_profile,target_profile,capability) else "VERSION_NOT_VERIFIED"
             if status in {S.EXACT,S.SUPPORTED,S.PARTIAL} and version_status!="VERIFIED":
                 status=S.MANUAL_REVIEW; data=None; reasons=(*reasons,"Source and target capability documentation/test evidence is incomplete for selected versions.")
             item=result(entity,kind,status,*reasons,required=required,topology=topology)
