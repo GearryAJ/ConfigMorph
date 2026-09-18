@@ -21,4 +21,14 @@ States: **SYNTAX_VERIFIED**, **END_TO_END_VERIFIED**, **VERSION_NOT_VERIFIED**, 
 
 The matrix describes individual evidence, not device validation. PAN-OS 11.1 local security-policy generation requires explicit placement and exports a separate, non-executed Configuration API move intent. PAN-OS 11.1 DIPP, interface-address PAT, and one-to-one DNAT target match/translation/route semantics are documented independently. Port translation target semantics remain unverified. No NAT capability passes ordering, deterministic placement, route outcome mapping, renderer, and full end-to-end gates. PAN-OS 12.1 remains blocked independently.
 
+## v0.2.0-alpha.1 release scope
+
+| Target profile | Candidate generation | Review-only / blocked |
+|---|---|---|
+| PAN-OS 11.1 `LOCAL_FIREWALL` | Addresses/groups, services/groups, security policies, separate ordering intent, supported static routes | All NAT subtypes; advanced source semantics |
+| PAN-OS 12.1 | None where target paths remain unverified | Limited; `VERSION_NOT_VERIFIED` |
+| Panorama | None | Blocked; device-group and pre/post-rulebase paths unimplemented |
+
+NAT entities remain visible with specific review reasons. No NAT candidate command is emitted.
+
 Run `python -m app.tools.doc_coverage` for development-time evidence counts and registry errors.

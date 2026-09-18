@@ -36,7 +36,7 @@ def test_validation_accounting_warning_blocking_and_zip():
     broken=review.model_copy(deep=True); broken.summary.generated-=1
     assert validate_migration(cfg,plan,broken,lines).status=="BLOCKING"
     package=export_package("candidate",{},review,validation,mapped()); names=zipfile.ZipFile(io.BytesIO(package)).namelist()
-    assert {"candidate-pan-os.set","review-report.json","mappings.json"}<=set(names) and "source.cfg" not in names and all(".." not in x and not x.startswith(("/","\\")) for x in names)
+    assert set(names)=={"candidate-pan-os.set","migration-report.json","review-report.json","validation-report.json","mappings.json","README"} and all(".." not in x and not x.startswith(("/","\\")) for x in names)
 
 def test_manual_and_unsupported_retained():
     cfg=FirewallConfig(metadata={"source_vendor":Vendor.ASA},addresses=[Address(id="bad",name="bad",type="any")])

@@ -63,4 +63,5 @@ def test_review_package_exports_ordering_provenance():
     _,_,_,review=reviewed(); validation=type("Validation",(),{"status":"PASS","findings":[],"model_dump_json":lambda self,indent=2:"{}"})()
     package=export_package("set rulebase security rules R1 action allow",report.model_dump(mode="json"),review,validation,mappings(),renderer.ordering_plan)
     archive=zipfile.ZipFile(io.BytesIO(package)); data=archive.read("security-rule-ordering.json").decode()
+    assert set(archive.namelist())=={"candidate-pan-os.set","security-rule-ordering.json","migration-report.json","review-report.json","validation-report.json","mappings.json","README"}
     assert "PANOS_CONFIG_API_MOVE" in data and "PANOS-11.1-CONFIG-API-ACTIONS" in data

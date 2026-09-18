@@ -30,5 +30,7 @@ Validation checks normalized IR, mappings, generated command structure, referenc
 - `review-report.json`
 - `validation-report.json`
 - `mappings.json`
+- `security-rule-ordering.json` when security rules are generated
+- `README`
 
 `source.cfg` is deliberately excluded. All processing and persistence remain local. Workspace files still contain sensitive plaintext and require normal filesystem protection.

@@ -1,8 +1,19 @@
 # Convert-In
 
-**Visualize. Analyze. Migrate.**
+Convert-In is a local firewall configuration analysis, visualization, and migration workbench.
 
-Convert-In is a fully local, open-source firewall configuration analysis, visualization, and migration workbench. It currently provides:
+## Migration workflow
+
+1. Import a synthetic or sanitized FortiGate/ASA configuration by drop, file picker, or paste.
+2. Confirm detected source OS version; select **PAN-OS 11.1 / LOCAL_FIREWALL**.
+3. Map source interfaces/contexts to target interfaces/zones. Confirm virtual router, vsys, security-rule placement, anchor when applicable.
+4. Select **Analyze & Convert**.
+5. Review generated, manual-review, unsupported, version-not-verified items. NAT remains review-only.
+6. Run application-level validation; export the candidate package.
+
+Generated output requires engineer review. No deployment or device validation occurs.
+
+Current capabilities:
 
 - Cisco ASA, FortiGate, and Palo Alto PAN-OS XML parsing
 - a normalized vendor-neutral firewall model
@@ -41,7 +52,7 @@ Sanitized screenshots are planned for `docs/images/overview.png`, `visualize.png
 
 Coverage is intentionally bounded by tests. Convert-In does **not** claim full vendor conversion.
 
-## Quick start
+## Run locally
 
 ```bash
 python -m venv .venv
