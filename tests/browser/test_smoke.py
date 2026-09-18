@@ -5,6 +5,7 @@ import pytest
 pytestmark=pytest.mark.browser
 
 def test_fortigate_offline_workflow(page,live_server):
+    live_server,server_log=live_server
     external=[]; errors=[]; assets={}; failed=[]
     page.on("request",lambda request: external.append(request.url) if urlparse(request.url).scheme not in {"data","blob"} and urlparse(request.url).hostname not in {"127.0.0.1","localhost","::1"} else None)
     page.on("console",lambda message: errors.append(f"console {message.type}: {message.text}") if message.type in {"error","warning"} else None)
@@ -28,7 +29,9 @@ def test_fortigate_offline_workflow(page,live_server):
     while page.locator("#review-list button").count():
         page.locator("#review-list button").first.click(); page.locator("#review-detail select").select_option("ACCEPTED")
         with page.expect_response(lambda response:"/migration/review/" in response.url) as save_response: page.get_by_role("button",name="Save Engineer Review").click()
-        assert save_response.value.ok,save_response.value.text()
+        if not save_response.value.ok:
+            body=save_response.value.text(); log=Path(server_log).read_text(encoding="utf-8")
+            pytest.fail(f"review save HTTP {save_response.value.status}: {body}\nServer exception:\n{log[-8000:]}")
         page.locator("#review-filters").select_option("NOT_REVIEWED")
     with page.expect_response(lambda response:"/migration/validate" in response.url) as validation_response: page.locator("#migration-validate").click()
     assert validation_response.value.ok,validation_response.value.text()
@@ -41,5 +44,6 @@ def test_fortigate_offline_workflow(page,live_server):
     assert not errors,errors
 
 def test_malformed_is_recoverable(page,live_server):
+    live_server,_=live_server
     page.goto(live_server); page.get_by_role("tab",name="Paste").click(); page.locator("#source").fill("not a firewall configuration"); page.get_by_role("button",name="Analyze & Convert").click()
     page.wait_for_timeout(300); assert page.locator("#source").input_value()=="not a firewall configuration"

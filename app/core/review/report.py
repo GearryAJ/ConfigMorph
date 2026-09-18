@@ -1,16 +1,35 @@
-import io,json,zipfile
+import io,json,os,tempfile,threading,time,zipfile
 from pathlib import Path
 from app import __version__
 from .models import ReviewDecision
 
+_decision_lock=threading.RLock()
+
 def load_decisions(root:Path):
-    path=root/"review.json"
-    if not path.is_file(): return {}
-    return {k:ReviewDecision.model_validate(v) for k,v in json.loads(path.read_text(encoding="utf-8")).items()}
+    with _decision_lock:
+        path=root/"review.json"
+        if not path.is_file(): return {}
+        return {k:ReviewDecision.model_validate(v) for k,v in json.loads(path.read_text(encoding="utf-8")).items()}
 
 def save_decisions(root:Path,decisions):
-    path=root/"review.json"; temp=path.with_suffix(".tmp")
-    temp.write_text(json.dumps({k:v.model_dump(mode="json") for k,v in decisions.items()},indent=2),encoding="utf-8"); temp.replace(path)
+    with _decision_lock:
+        root.mkdir(parents=True,exist_ok=True); path=root/"review.json"
+        fd,name=tempfile.mkstemp(prefix="review-",suffix=".tmp",dir=root)
+        try:
+            with os.fdopen(fd,"w",encoding="utf-8") as stream:
+                json.dump({k:v.model_dump(mode="json") for k,v in decisions.items()},stream,indent=2); stream.flush(); os.fsync(stream.fileno())
+            for attempt in range(5):
+                try: os.replace(name,path); break
+                except PermissionError:
+                    if attempt==4: raise
+                    time.sleep(.01*(attempt+1))
+        finally:
+            if os.path.exists(name): os.unlink(name)
+
+def update_decision(root:Path,item_id:str,decision:ReviewDecision):
+    with _decision_lock:
+        decisions=load_decisions(root); decisions[item_id]=decision; save_decisions(root,decisions)
+        return decisions
 
 def human_report(review,validation,mappings):
     source=review.source_version.selected_version if review.source_version else "not selected"; target=review.target_version.selected_version if review.target_version else "not selected"

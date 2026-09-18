@@ -14,7 +14,7 @@ from app.persistence.repositories.projects import get_project
 from app.core.migration import MigrationMappings, MigrationPlanner, build_report, default_mappings, migration_pair
 from app.core.renderers import PaloAltoRenderer
 from app.core.migration.validation import validate_candidate
-from app.core.review import ReviewDecision,build_review,export_package,load_decisions,save_decisions,validate_migration
+from app.core.review import ReviewDecision,build_review,export_package,load_decisions,update_decision,validate_migration
 from app.core.versions import resolve_context
 from app.core.versions.models import VersionContext
 from app.core.pan_lab import PanLabValidationResult
@@ -153,17 +153,13 @@ def migration_render(project_id:str):
     ordering=getattr(renderer,"ordering_plan",None); ordering_path=root/"security-rule-ordering.json"
     if ordering: ordering_path.write_text(ordering.model_dump_json(indent=2),encoding="utf-8")
     elif ordering_path.exists(): ordering_path.unlink()
-    cfg,_,_=_migration(project_id); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root)); _persist_current_review(root,review)
+    cfg,_,_=_migration(project_id); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root))
     status="BLOCKED" if report.errors else "REVIEW_REQUIRED" if report.manual_review or report.unsupported or report.partial else "CANDIDATE"
     return {"status":status,"generated_lines":len(lines),"generated_entities":report.generated_entities,"skipped_entities":report.skipped_entities,"manual_review":report.manual_review,"unsupported":report.unsupported,"candidate_path":"migration/candidate-pan-os.set","report":report,"candidate":candidate}
 
 def _current_review(project_id):
-    cfg,mappings,root=_migration(project_id); source_version,target_version=_versions(project_id); plan=MigrationPlanner().plan(cfg,mappings,source_version,target_version); renderer=PaloAltoRenderer(); lines,report=renderer.render(plan) if not plan.blocked else ([],build_report(plan)); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root)); _persist_current_review(root,review)
+    cfg,mappings,root=_migration(project_id); source_version,target_version=_versions(project_id); plan=MigrationPlanner().plan(cfg,mappings,source_version,target_version); renderer=PaloAltoRenderer(); lines,report=renderer.render(plan) if not plan.blocked else ([],build_report(plan)); review=build_review(cfg,plan,getattr(renderer,"commands",[]),load_decisions(root))
     return cfg,mappings,root,plan,lines,report,review
-
-def _persist_current_review(root,review):
-    decisions={x.id:ReviewDecision(status=x.review_status,note=x.note,semantic_hash=x.semantic_hash) for x in review.items if x.review_status!="NOT_REVIEWED" or x.note}
-    save_decisions(root,decisions)
 
 @router.get("/projects/{project_id}/migration/review")
 def migration_review(project_id:str): return _current_review(project_id)[-1]
@@ -181,7 +177,7 @@ def update_migration_review(project_id:str,item_id:str,decision:ReviewDecision):
     item=next((x for x in review.items if x.id==item_id),None)
     if not item: raise HTTPException(404,"Review item not found")
     if decision.semantic_hash!=item.semantic_hash: raise HTTPException(409,"Review item changed; reload before saving a decision")
-    decision.semantic_hash=item.semantic_hash; decisions=load_decisions(root); decisions[item_id]=decision; save_decisions(root,decisions)
+    decision.semantic_hash=item.semantic_hash; decisions=update_decision(root,item_id,decision)
     return next(x for x in build_review(_migration(project_id)[0],plan,getattr(_review_renderer(plan),"commands",[]),decisions).items if x.id==item_id)
 
 def _review_renderer(plan):

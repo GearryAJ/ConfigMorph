@@ -2,6 +2,7 @@ import io,time,zipfile
 from pathlib import Path
 from fastapi.testclient import TestClient
 from app.main import app
+from app.config import settings
 from app.core.models import Address,FirewallConfig,SecurityRule,Vendor
 from app.core.migration import InterfaceMapping,MigrationMappings,MigrationPlanner
 from app.core.renderers import PaloAltoRenderer
@@ -55,6 +56,25 @@ def test_review_api_persistence_invalidation_validation_and_package():
     assert client.get(base+f"/review/{item['id']}").json()["review_status"]=="NEEDS_CHANGES"
     validation=client.post(base+"/validate"); assert validation.status_code==200 and client.get(base+"/validation").status_code==200
     package=client.get(base+"/review-package"); assert package.status_code==200
+
+def test_first_multiple_and_updated_review_decisions_persist():
+    client=TestClient(app); source=Path("examples/fortigate/basic.conf").read_text(encoding="utf-8")
+    analyzed=client.post("/api/analyze",data={"source":source,"source_vendor":"fortigate","source_version":"7.4","target_vendor":"paloalto","target_version":"11.1"})
+    project=analyzed.text.split("Project: <code>")[1].split("<")[0]; base=f"/api/projects/{project}/migration"
+    mappings=client.get(base+"/mappings").json()
+    for index,item in enumerate(mappings["interfaces"]): item.update(target_interface=f"ethernet1/{index+1}",target_zone=item["source_nameif"] or item["source_interface"],confirmed=True)
+    assert client.put(base+"/mappings",json=mappings).status_code==200
+    assert client.post(base+"/render").status_code==200
+    review=client.get(base+"/review").json(); first,second=review["items"][:2]
+    root=Path(settings.workspace_dir)/project/"migration"; path=root/"review.json"; assert not path.exists()
+    def save(item,status,note=""):
+        return client.put(base+f"/review/{item['id']}",json={"status":status,"note":note,"semantic_hash":item["semantic_hash"]})
+    assert save(first,"ACCEPTED").status_code==200
+    assert save(second,"NEEDS_CHANGES").status_code==200
+    assert save(first,"REVIEWED","Checked again.").status_code==200
+    persisted={item["id"]:item for item in client.get(base+"/review").json()["items"]}
+    assert persisted[first["id"]]["review_status"]=="REVIEWED" and persisted[first["id"]]["note"]=="Checked again."
+    assert persisted[second["id"]]["review_status"]=="NEEDS_CHANGES"
 
 def test_review_generation_2000_entities_linear_smoke():
     started=time.perf_counter(); *_,review=reviewed(config(1000),mapped())
