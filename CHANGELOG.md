@@ -6,6 +6,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Changed
 
+- Added Phase N synthetic SMALL/MEDIUM/LARGE ASA and FortiOS fixture regression, deterministic semantic comparisons, malformed-input recovery checks, stage benchmarks, and optional offline Playwright smoke coverage. Migration scope is unchanged.
 - Added official-vendor documentation provenance, explicit OS version profiles, conservative capability checks, version validation, and review/export provenance for ASA/FortiOS to PAN-OS migration.
 - Downgraded previously optimistic migration claims where source or target version documentation and tested syntax evidence are incomplete.
 - Expanded focused official references; added structured evidence completeness, PAN command provenance/context, orphan-reference validation, and development-time documentation coverage reporting.
