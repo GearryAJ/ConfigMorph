@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     workspace_dir: Path = Path("workspace")
     max_input_bytes: int = 5 * 1024 * 1024
     pan_lab_validation_enabled: bool = False
+    pan_lab_isolated: bool = False
     pan_lab_host: str|None = None
     pan_lab_host_allowlist: str = ""
     pan_lab_ca_bundle: Path|None = None

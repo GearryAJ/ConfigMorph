@@ -20,6 +20,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/en/1.1.
 
 ### Added
 
+- Closed PAN-OS 11.1 named candidate snapshot and restore evidence; added explicit cleanup confidence, lifecycle error states, pre-existing candidate preservation tests, isolated-lab acknowledgement, and commit/deployment request denial. Live transport remains blocked pending verified XML mutation mapping and snapshot cleanup.
 - Added disabled-by-default PAN-OS 11.1 lab-validation orchestration, sanitized reports, fake transport coverage, UI status, and export support. Live transport remains blocked pending authoritative candidate-restore evidence.
 - FortiGate → PAN-OS alpha candidate migration through the normalized IR, shared planner, renderer, review, and validation workflow.
 - Central migration-pair registry and source adapters for Cisco ASA and FortiGate.

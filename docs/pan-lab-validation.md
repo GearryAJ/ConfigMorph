@@ -2,25 +2,58 @@
 
 Optional validation targets an isolated `LOCAL_FIREWALL` running PAN-OS 11.1. It never commits, deploys, handles NAT, targets Panorama, or accepts credentials through the web UI.
 
+## Evidence result
+
+PAN-OS defines the candidate configuration as the running configuration plus inactive changes made after the last commit. A named candidate snapshot therefore differs from `running-config.xml`: it preserves pre-existing uncommitted work. Saving that snapshot does not activate changes. Activation requires a separate commit, which Convert-In forbids.
+
+PAN-OS also documents loading a custom-named candidate snapshot. Revert operations replace settings in the current candidate configuration. Loading the saved pre-validation snapshot restores candidate state; it does not change running configuration unless an optional commit follows. Convert-In never issues that commit. `Revert to running configuration` is not an acceptable cleanup path because it discards changes made since the last commit.
+
+The PAN-OS 11.1 XML API operational-command reference supplies these request bodies:
+
+- Full candidate validation: `<validate><full></full></validate>`
+- Save configuration: `<save><config><to>filename</to></config></save>`
+- Load configuration: `<load><config><from>filename</from></config></load>`
+
+The Configuration API separately documents `action=set` as candidate mutation and `action=get` as candidate retrieval. It does not establish a direct conversion from Convert-In `PanSetCommand` CLI strings to the required XPath and XML element payloads. Convert-In does not send CLI strings to the XML API.
+
+## Lifecycle contract
+
+1. Read the device version. Stop before mutation unless it belongs to PAN-OS 11.1.
+2. Retrieve the complete candidate configuration. This includes running state and all pre-existing uncommitted changes.
+3. Save it to a generated named snapshot and verify snapshot creation.
+4. Apply only provenance-checked Convert-In candidate mutations.
+5. Run full validation and collect sanitized findings.
+6. In unconditional cleanup, load the named pre-validation snapshot.
+7. Retrieve candidate configuration again. Compare its canonical transport representation with the pre-validation representation.
+8. Report `RESTORED` only on exact equality. Otherwise report `RESTORE_FAILED` or `RESTORE_UNVERIFIED`; never report live success.
+9. Delete the temporary snapshot only after an official PAN-OS 11.1 operation is documented and tested.
+
+Cleanup runs after PASS, WARNING, BLOCKING findings, apply failure, partial apply failure, validation failure, and connection failure after mutation may have started. A snapshot-save failure stops before mutation. Pre-existing candidate changes are preserved by restoring the saved candidate snapshot, never by reverting to running configuration.
+
+## Cleanup and error model
+
+Cleanup states: `NOT_REQUIRED`, `RESTORED`, `RESTORE_FAILED`, `RESTORE_UNVERIFIED`. PASS and WARNING require `RESTORED`. Reports include a SHA-256 snapshot-name identifier, snapshot creation, candidate mutation, preservation, restore attempt/success/verification, temporary snapshot disposition, and `commit_performed=false`. Snapshot names and contents never enter reports.
+
+Distinct stage errors: `SNAPSHOT_SAVE_FAILED`, `CANDIDATE_APPLY_FAILED`, `VALIDATION_FAILED`, `RESTORE_FAILED`, `RESTORE_UNVERIFIED`, `VERSION_MISMATCH`, `CONNECTION_ERROR`.
+
+Temporary names use `convert-in-validation-<UTC timestamp>-<128-bit random hex>.xml`. They contain no source filename, customer name, username, host, or secret. The retrieved official pages do not specify a complete filename grammar; the restricted alphanumeric, hyphen, period form is deliberate. Snapshot deletion remains undocumented in the reviewed references. A future live adapter must report `NOT_ATTEMPTED_UNDOCUMENTED` and may leave the sanitized snapshot only in the isolated lab until deletion receives authoritative evidence.
+
+## Transport boundary
+
+Allowed operation categories are `SHOW_VERSION`, `SAVE_CANDIDATE`, `APPLY_CANDIDATE`, `VALIDATE_FULL`, `LOAD_SNAPSHOT`, and `VERIFY_CANDIDATE`. Arbitrary operational-command passthrough is prohibited. Request shapes containing `commit`, `commit-all`, `commit-and-push`, `push`, or `deploy` are rejected.
+
+`FCS_PAN_LAB_VALIDATION_ENABLED=true` and `FCS_PAN_LAB_ISOLATED=true` are both required. The host comes only from `FCS_PAN_LAB_HOST` and must match `FCS_PAN_LAB_HOST_ALLOWLIST`; user input cannot select it. `FCS_PAN_LAB_CA_BUNDLE` is reserved for trusted TLS verification. Credentials and insecure TLS switches remain absent.
+
 ## Current safety state
 
-`FCS_PAN_LAB_VALIDATION_ENABLED` defaults to `false`. Enabling it does not open a network connection. The endpoint returns `VERSION_NOT_VERIFIED` because official evidence found for `validate full` and candidate set commands did not establish the exact snapshot restoration operation required by this project's cleanup invariant. No live transport is implemented until that evidence is recorded.
-
-The transport-neutral orchestrator is covered with fake-transport tests. Its required sequence is version check, snapshot, apply generated commands, `validate full`, restore, verify restoration. Any failed restoration becomes `BLOCKING`. `commit_performed` is always `false` and model validation rejects any contrary report.
-
-## Configuration boundary
-
-- `FCS_PAN_LAB_VALIDATION_ENABLED=true`: exposes the blocked opt-in state only.
-- `FCS_PAN_LAB_HOST`: reserved; never persisted or returned.
-- `FCS_PAN_LAB_HOST_ALLOWLIST`: reserved for exact host allowlisting.
-- `FCS_PAN_LAB_CA_BUNDLE`: reserved for trusted TLS certificate verification.
-
-API keys, passwords, private keys, and insecure TLS switches are intentionally absent. Reports contain status, candidate SHA-256, timing, sanitized device categories/messages, provenance IDs, restoration state, and documentation references. Reports contain no host, username, credential, source configuration, or candidate text.
+Live transport remains blocked with `VERSION_NOT_VERIFIED`. Save, load, validation, candidate retrieval, and candidate-versus-running semantics now have PAN-OS 11.1 evidence. Two gates remain open: exact `PanSetCommand` to XML API XPath/element mapping; documented temporary snapshot deletion. No network client exists. Standard CI uses fake transports only.
 
 ## Official PAN-OS 11.1 references
 
-- `PANOS-11.1-CLI-VALIDATE`: [Commit Configuration Changes](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/commit-configuration-changes). `validate full` enqueues syntactic and semantic validation; commit is separate.
-- `PANOS-11.1-CLI-LOAD-TEXT`: [Load Configuration Settings from a Text File](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/load-configurations). Documents candidate set-command loading.
-- `PANOS-11.1-XML-API-ACTIONS`: [PAN-OS XML API Request Types and Actions](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/commit-configuration-api). Documents candidate configuration actions and operational validation category.
-
-Live activation requires authoritative PAN-OS 11.1 snapshot, restore, deletion, and restoration-verification syntax; a TLS-verifying, allowlisted adapter; an isolated lab account with no commit privilege; explicit `pan_lab` tests.
+- `PANOS-11.1-MANAGE-BACKUPS`: [Manage Configuration Backups](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups)
+- `PANOS-11.1-SAVE-CANDIDATE`: [Save and Export Firewall Configurations](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups/save-and-export-firewall-configurations)
+- `PANOS-11.1-LOAD-SNAPSHOT`: [Revert Firewall Configuration Changes](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups/revert-firewall-configuration-changes)
+- `PANOS-11.1-XML-API-OP`: [Run Operational Mode Commands (API)](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/run-operational-mode-commands-api)
+- `PANOS-11.1-XML-API-CONFIG`: [PAN-OS XML API Request Types and Actions](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/configuration-api)
+- `PANOS-11.1-CLI-VALIDATE`: [Commit Configuration Changes](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/commit-configuration-changes)
+- `PANOS-11.1-CLI-LOAD-TEXT`: [Load Configuration Settings from a Text File](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/load-configurations)

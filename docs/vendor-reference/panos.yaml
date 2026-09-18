@@ -1,5 +1,40 @@
 [
   {
+    "id": "PANOS-11.1-MANAGE-BACKUPS",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "ADMIN_GUIDE",
+    "title": "Manage Configuration Backups", "topic": "Running configuration and candidate configuration distinction",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups",
+    "verified_at": "2026-09-18", "notes": "Candidate configuration is running configuration plus inactive changes made after the last commit."
+  },
+  {
+    "id": "PANOS-11.1-SAVE-CANDIDATE",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "ADMIN_GUIDE",
+    "title": "Save and Export Firewall Configurations", "topic": "Named candidate snapshots and non-activating save semantics",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups/save-and-export-firewall-configurations",
+    "verified_at": "2026-09-18", "notes": "A named snapshot includes all administrators' candidate changes. Saving does not activate changes; activation requires commit."
+  },
+  {
+    "id": "PANOS-11.1-LOAD-SNAPSHOT",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "ADMIN_GUIDE",
+    "title": "Revert Firewall Configuration Changes", "topic": "Loading a named candidate snapshot into candidate configuration",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups/revert-firewall-configuration-changes",
+    "verified_at": "2026-09-18", "notes": "Revert replaces current candidate settings. Loading a custom-named candidate snapshot restores candidate state; commit is optional and excluded here."
+  },
+  {
+    "id": "PANOS-11.1-XML-API-OP",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "API_REFERENCE",
+    "title": "Run Operational Mode Commands (API)", "topic": "XML API full validation, configuration save, and configuration load request shapes",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/run-operational-mode-commands-api",
+    "verified_at": "2026-09-18", "notes": "Documents validate full, save config to filename, and load config from filename as type=op requests."
+  },
+  {
+    "id": "PANOS-11.1-XML-API-CONFIG",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "API_REFERENCE",
+    "title": "PAN-OS XML API Request Types and Actions", "topic": "Candidate configuration mutation and retrieval actions",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/configuration-api",
+    "verified_at": "2026-09-18", "notes": "Documents action=set for candidate mutation and action=get for candidate retrieval. PanSetCommand-to-XPath/XML mapping remains unverified."
+  },
+  {
     "id": "PANOS-11.1-CLI-VALIDATE",
     "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "ADMIN_GUIDE",
     "title": "Commit Configuration Changes", "topic": "Non-committing full candidate validation and asynchronous validation jobs",
