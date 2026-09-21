@@ -4,11 +4,15 @@ Convert-In is a local firewall configuration analysis, visualization, and migrat
 
 ## Migration workflow
 
-1. Drop or paste a synthetic or sanitized FortiGate/ASA configuration.
-2. Select **Analyze & Convert**. Confirm the detected source OS version and **PAN-OS 11.1 / LOCAL_FIREWALL** target.
-3. Map source interfaces/contexts to target interfaces/zones. Confirm virtual router and security-rule placement.
-4. Review generated, manual-review, unsupported, and version-not-verified items. NAT remains review-only.
-5. Run application-level validation. Export the candidate package.
+**Import → Analyze → Mapping → Migration → Review → Validation → Export**
+
+1. **Import:** Drop, select, or paste a synthetic or sanitized FortiGate/ASA configuration.
+2. **Analyze:** Select **Analyze & Convert**. Inspect Overview, Visualize, and Analyze. Confirm the detected source OS version and **PAN-OS 11.1 / LOCAL_FIREWALL** target.
+3. **Mapping:** Map source interfaces/contexts to target interfaces/zones. Confirm virtual router and security-rule placement.
+4. **Migration:** Inspect compatibility evidence, then generate and inspect the candidate. NAT remains review-only and emits no commands.
+5. **Review:** Compare source and target semantics. Record an engineer decision for each entity.
+6. **Validation:** Run application-level validation. PAN-OS lab status remains separate and does not imply device validation.
+7. **Export:** Export the allowlisted candidate package after blocking findings are resolved.
 
 Generated output requires engineer review. No deployment or device validation occurs.
 
@@ -30,13 +34,23 @@ Current capabilities:
 
 Inputs are limited to 5 MiB, PAN XML uses `defusedxml`, configuration bodies are not logged, and CSP/security headers are set. Workspace files contain sensitive plaintext; protect local filesystem access and never commit `data/` or `workspace/`.
 
-## Screenshots
+## Workbench screenshots
 
 Screenshots use the synthetic `examples/fortigate/basic.conf` fixture.
 
-| Import | Overview |
+| Overview | Visualize |
 |---|---|
-| ![Compact file import workspace](docs/images/import.png) | ![Synthetic configuration analysis overview](docs/images/overview.png) |
+| ![Synthetic configuration analysis overview](docs/images/overview.png) | ![Bounded dependency visualization](docs/images/visualize.png) |
+
+| Analyze | Mapping and migration |
+|---|---|
+| ![Configuration findings table](docs/images/analysis.png) | ![Target context and interface mappings](docs/images/migration.png) |
+
+| Semantic review | Candidate configuration |
+|---|---|
+| ![Semantic migration review workbench](docs/images/review.png) | ![Candidate PAN-OS configuration](docs/images/candidate.png) |
+
+![Application and PAN-OS lab validation sections](docs/images/validation.png)
 
 ## Support matrix
 

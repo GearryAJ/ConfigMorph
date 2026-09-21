@@ -1,5 +1,13 @@
 # Migration
 
+## Workbench workflow
+
+**Import → Analyze → Mapping → Migration → Review → Validation → Export**
+
+Import accepts a local file or pasted configuration. Analyze creates the normalized model, findings, compatibility accounting, and bounded visualization. Mapping records explicit target interfaces, zones, virtual router, and security-rule placement. Migration exposes compatibility evidence and candidate generation. Review compares source and target semantics per entity. Validation runs application-level checks and reports PAN-OS lab status separately. Export produces the allowlisted review package only after blocking findings are resolved.
+
+The sticky source/target context remains visible across post-analysis views. Generated, manual-review, unsupported, and version-not-verified states remain explicit. NAT remains `MANUAL_REVIEW`; no NAT commands are emitted.
+
 ## Architecture
 
 `vendor parser → FirewallConfig IR → compatibility/planner → confirmed mappings → PAN command DTOs → serializer → candidate/report`
@@ -39,3 +47,5 @@ Generated files are always **Candidate Configuration — Engineer Review Require
 Review all manual-review/unsupported findings, mappings, normalized parser warnings, names, command references, topology, and behavior on an isolated PAN-OS lab system before any separate deployment process. This application has no deployment capability.
 
 The Phase H semantic review queue, persisted engineer decisions, stale-decision invalidation, staged validation, and final package are documented in [review.md](review.md). Final package export is blocked by validation failures; candidate inspection remains available.
+
+The Validation view separates application validation from PAN-OS lab validation. The current lab transport remains disabled/not verified. It does not commit, deploy, or change candidate-generation scope.

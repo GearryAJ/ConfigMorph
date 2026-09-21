@@ -1,21 +1,26 @@
 # Semantic Migration Review
 
-Phase H adds a local engineer-review gate after ASA-to-PAN candidate generation. It does not deploy, connect to PAN-OS, or certify production safety.
+The post-analysis workbench provides a local engineer-review gate after ASA-to-PAN or FortiGate-to-PAN candidate generation. It does not deploy, connect to PAN-OS, or certify production safety.
 
 ## Workflow
 
-1. Analyze an ASA configuration and confirm interface/zone mappings.
-2. Generate the PAN-OS candidate.
-3. Review every normalized entity in **Migration Readiness → Semantic Review**. Compare source intent with target intent, inspect preserved/changed/dropped fields, findings, dependencies, and generated commands.
-4. Record a local note and choose `NOT_REVIEWED`, `REVIEWED`, `ACCEPTED`, `NEEDS_CHANGES`, or `BLOCKED`.
-5. Run staged validation. Resolve every `BLOCKING` finding.
-6. Export the final review package. Validate the candidate separately on an isolated PAN-OS lab system before any deployment process.
+**Import → Analyze → Mapping → Migration → Review → Validation → Export**
+
+1. Import and analyze a synthetic or sanitized ASA or FortiGate configuration.
+2. Inspect analysis and compatibility evidence. Confirm interface/zone mappings and security-rule placement.
+3. Generate and inspect the PAN-OS candidate in Migration. NAT remains `MANUAL_REVIEW` with no generated commands.
+4. Open Review. Compare source intent with target intent; inspect preserved, changed, and dropped fields, findings, dependencies, and generated commands.
+5. Record a local note and choose `NOT_REVIEWED`, `REVIEWED`, `ACCEPTED`, `NEEDS_CHANGES`, or `BLOCKED`.
+6. Run staged application validation. Resolve every `BLOCKING` finding. PAN-OS lab status is distinct and remains disabled/not verified unless separately configured.
+7. Open Export and download the final review package. Validate the candidate separately on an isolated PAN-OS lab system before any deployment process.
 
 `ACCEPTED` means only that an engineer reviewed that item. It does not mean production ready, device validated, or safe to deploy. `MANUAL_REVIEW` and `UNSUPPORTED` are compatibility outcomes, not engineer decisions; such entities remain visible even when no command was generated.
 
 ## Persistence and invalidation
 
 Workspace-local `migration/review.json` contains only entity IDs, decisions, notes, and semantic hashes. Regeneration compares canonical target intent plus generated commands. A changed hash resets only that entity to `NOT_REVIEWED`; unchanged decisions survive. Source configuration is not copied into review state.
+
+Review updates include the current semantic hash. A stale hash returns HTTP `409`; the UI reloads the review so the engineer can inspect changed semantics before saving again.
 
 ## Validation
 
