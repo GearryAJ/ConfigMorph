@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from fastapi.testclient import TestClient
 
+import app.web.api as web_api
 from app.config import settings
 from app.core.migration.models import MigrationMappings,PanSetCommand,TargetManagementMode
 from app.core.pan_lab import PanLabOperation,PanLabValidationResult,assert_safe_request,snapshot_name,validate_in_lab
@@ -92,3 +93,10 @@ def test_endpoint_requires_both_opt_ins_and_remains_blocked(monkeypatch,tmp_path
     root.mkdir(); (root/"normalized.json").write_text('{"vendor":"cisco_asa"}',encoding="utf-8")
     client=TestClient(app); response=client.post(f"/api/projects/{project}/migration/pan-lab-validation")
     assert response.status_code in {404,409}
+
+def test_evidence_gap_blocks_transport_after_dual_opt_in(monkeypatch,tmp_path):
+    monkeypatch.setattr(settings,"pan_lab_validation_enabled",True); monkeypatch.setattr(settings,"pan_lab_isolated",True); monkeypatch.setattr(web_api,"_migration",lambda project:(None,None,tmp_path))
+    project="00000000-0000-0000-0000-000000000002"
+    response=TestClient(app).post(f"/api/projects/{project}/migration/pan-lab-validation")
+    assert response.status_code==501
+    assert "version-matched device API Browser or debug evidence" in response.json()["detail"]

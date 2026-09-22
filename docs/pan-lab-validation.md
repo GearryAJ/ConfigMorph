@@ -14,7 +14,7 @@ The PAN-OS 11.1 XML API operational-command reference supplies these request bod
 - Save configuration: `<save><config><to>filename</to></config></save>`
 - Load configuration: `<load><config><from>filename</from></config></load>`
 
-The Configuration API separately documents `action=set` as candidate mutation and `action=get` as candidate retrieval. It does not establish a direct conversion from Convert-In `PanSetCommand` CLI strings to the required XPath and XML element payloads. Convert-In does not send CLI strings to the XML API.
+The Configuration API separately documents `action=set` as candidate mutation and `action=get` as candidate retrieval. It does not publish the capability-specific local-firewall XPath and XML element payloads needed to convert `PanSetCommand`. Palo Alto instead documents discovery through the API Browser or `debug cli on` on an actual firewall. Convert-In does not infer those trees or send CLI strings to the XML API.
 
 ## Lifecycle contract
 
@@ -46,7 +46,16 @@ Allowed operation categories are `SHOW_VERSION`, `SAVE_CANDIDATE`, `APPLY_CANDID
 
 ## Current safety state
 
-Live transport remains blocked with `VERSION_NOT_VERIFIED`. Save, load, validation, candidate retrieval, and candidate-versus-running semantics now have PAN-OS 11.1 evidence. Two gates remain open: exact `PanSetCommand` to XML API XPath/element mapping; documented temporary snapshot deletion. No network client exists. Standard CI uses fake transports only.
+Live transport remains blocked with `VERSION_NOT_VERIFIED`. Save, load, validation, candidate retrieval, and candidate-versus-running semantics have PAN-OS 11.1 evidence. The reviewed public references do not establish these exact local-firewall mutation contracts:
+
+- `/config/devices/entry[...]` device root and selected VSYS addressing;
+- address and static address-group entry XPath and element forms;
+- TCP/UDP service and service-group entry XPath and element forms;
+- local `rulebase/security/rules` entry XPath and field/list element forms;
+- legacy virtual-router static-route XPath, including explicit virtual-router selection, next-hop, interface, and metric forms;
+- whether repeated `action=set` requests merge list members exactly as the structured renderer requires.
+
+Authoritative closure requires captured PAN-OS 11.1 `LOCAL_FIREWALL` API Browser or debug output for every supported shape, then golden fixtures and fake-transport tests. Temporary snapshot deletion also remains undocumented, but does not weaken restore: snapshots remain in the isolated lab and are reported as `NOT_ATTEMPTED_UNDOCUMENTED`. No `PanXmlMutation` converter or network client exists. Standard CI uses fake lifecycle transports only.
 
 ## Official PAN-OS 11.1 references
 
@@ -55,5 +64,7 @@ Live transport remains blocked with `VERSION_NOT_VERIFIED`. Save, load, validati
 - `PANOS-11.1-LOAD-SNAPSHOT`: [Revert Firewall Configuration Changes](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups/revert-firewall-configuration-changes)
 - `PANOS-11.1-XML-API-OP`: [Run Operational Mode Commands (API)](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/run-operational-mode-commands-api)
 - `PANOS-11.1-XML-API-CONFIG`: [PAN-OS XML API Request Types and Actions](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/configuration-api)
+- `PANOS-11.1-XML-API-BROWSER`: [Use the API Browser](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/explore-the-api/use-the-api-browser)
+- `PANOS-11.1-XML-CLI-DISCOVERY`: [Use the CLI to Find XML API Syntax](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/explore-the-api/use-the-cli-to-find-xml-api-syntax)
 - `PANOS-11.1-CLI-VALIDATE`: [Commit Configuration Changes](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/commit-configuration-changes)
 - `PANOS-11.1-CLI-LOAD-TEXT`: [Load Configuration Settings from a Text File](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-cli-quick-start/use-the-cli/load-configurations)

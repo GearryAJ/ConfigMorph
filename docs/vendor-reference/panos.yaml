@@ -32,7 +32,21 @@
     "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "API_REFERENCE",
     "title": "PAN-OS XML API Request Types and Actions", "topic": "Candidate configuration mutation and retrieval actions",
     "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/pan-os-xml-api-request-types/configuration-api",
-    "verified_at": "2026-09-18", "notes": "Documents action=set for candidate mutation and action=get for candidate retrieval. PanSetCommand-to-XPath/XML mapping remains unverified."
+    "verified_at": "2026-09-21", "notes": "Documents action=set for candidate mutation and action=get for candidate retrieval. It does not publish capability-specific local-firewall XPath and element payloads."
+  },
+  {
+    "id": "PANOS-11.1-XML-API-BROWSER",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "API_REFERENCE",
+    "title": "Use the API Browser", "topic": "Device-provided XPath and API URL discovery",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/explore-the-api/use-the-api-browser",
+    "verified_at": "2026-09-21", "notes": "The API browser runs on the target firewall and exposes its available request tree, XPath, and API URL."
+  },
+  {
+    "id": "PANOS-11.1-XML-CLI-DISCOVERY",
+    "vendor": "paloalto", "product": "PAN-OS", "version_family": "11.1", "document_type": "API_REFERENCE",
+    "title": "Use the CLI to Find XML API Syntax", "topic": "Device debug discovery for config and operational XML API syntax",
+    "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/explore-the-api/use-the-cli-to-find-xml-api-syntax",
+    "verified_at": "2026-09-21", "notes": "Palo Alto directs operators to debug cli output on a firewall or Panorama to obtain corresponding XML and XPath."
   },
   {
     "id": "PANOS-11.1-CLI-VALIDATE",

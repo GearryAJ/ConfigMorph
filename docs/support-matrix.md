@@ -31,4 +31,6 @@ The matrix describes individual evidence, not device validation. PAN-OS 11.1 loc
 
 NAT entities remain visible with specific review reasons. No NAT candidate command is emitted.
 
+PAN-OS 11.1 syntax evidence does not imply XML API mutation evidence. Public Configuration API documentation identifies `action=set` but does not publish exact local-firewall XPath and element payloads for the six emitted capability families. Live candidate mutation therefore remains `VERSION_NOT_VERIFIED` pending PAN-OS 11.1 device API Browser or debug evidence. No partial capability subset is enabled.
+
 Run `python -m app.tools.doc_coverage` for development-time evidence counts and registry errors.

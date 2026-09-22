@@ -198,13 +198,13 @@ def pan_lab_validation(project_id:str):
     _,_,root=_migration(project_id); path=root/"validation"/"pan-lab-validation.json"
     if path.is_file(): return json.loads(path.read_text(encoding="utf-8"))
     enabled=settings.pan_lab_validation_enabled and settings.pan_lab_isolated
-    return {"status":"BLOCKED" if enabled else "NOT_CONFIGURED","message":"VERSION_NOT_VERIFIED: XML API candidate mutation mapping and snapshot cleanup remain unverified." if enabled else "PAN-OS lab validation requires enabled and isolated-lab acknowledgement."}
+    return {"status":"BLOCKED" if enabled else "NOT_CONFIGURED","message":"VERSION_NOT_VERIFIED: PAN-OS 11.1 local-firewall XPath and XML element mappings require version-matched device API Browser or debug evidence." if enabled else "PAN-OS lab validation requires enabled and isolated-lab acknowledgement."}
 
 @router.post("/projects/{project_id}/migration/pan-lab-validation")
 def run_pan_lab_validation(project_id:str):
     _migration(project_id)
     if not settings.pan_lab_validation_enabled or not settings.pan_lab_isolated: raise HTTPException(409,"PAN-OS lab validation requires FCS_PAN_LAB_VALIDATION_ENABLED=true and FCS_PAN_LAB_ISOLATED=true")
-    raise HTTPException(501,"VERSION_NOT_VERIFIED: XML API candidate mutation mapping and snapshot cleanup remain unverified")
+    raise HTTPException(501,"VERSION_NOT_VERIFIED: PAN-OS 11.1 local-firewall XPath and XML element mappings require version-matched device API Browser or debug evidence")
 
 @router.get("/projects/{project_id}/migration/review-package")
 def migration_review_package(project_id:str):
