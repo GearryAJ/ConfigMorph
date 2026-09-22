@@ -57,6 +57,23 @@ Live transport remains blocked with `VERSION_NOT_VERIFIED`. Save, load, validati
 
 Authoritative closure requires captured PAN-OS 11.1 `LOCAL_FIREWALL` API Browser or debug output for every supported shape, then golden fixtures and fake-transport tests. Temporary snapshot deletion also remains undocumented, but does not weaken restore: snapshots remain in the isolated lab and are reported as `NOT_ATTEMPTED_UNDOCUMENTED`. No `PanXmlMutation` converter or network client exists. Standard CI uses fake lifecycle transports only.
 
+## O.5 evidence capture
+
+No lab runtime inputs were available during O.5 tooling work. No device connection or capture occurred. `python -m app.tools.pan_lab_capture` prepares one local evidence record and performs no network request. It requires the three opt-ins, an HTTPS origin, an existing CA bundle, and one fixed `--capture` value. The host is validated but never written. `evidence/pan11_1_lab/` is ignored in full; raw and normalized records require manual sanitization and review before any derived fixture enters Git.
+
+Operator sequence:
+
+1. Confirm an authorized, isolated PAN-OS 11.1.x `LOCAL_FIREWALL`; record model and VSYS inventory. Stop on any other version or active candidate editor.
+2. Retrieve and retain the normalized candidate state. Save and verify `convert-in-o5-evidence-<timestamp>` before mutation.
+3. Set `FCS_PAN_LAB_VALIDATION_ENABLED=true`, `FCS_PAN_LAB_ISOLATED=true`, and `FCS_PAN_LAB_EVIDENCE_CAPTURE=true`. Keep credentials in the operator's runtime only.
+4. Run the helper for one fixed experiment, for example `python -m app.tools.pan_lab_capture --capture address --host https://pan-lab.example --ca-bundle C:\\path\\to\\lab-ca.pem`.
+5. Capture exact API Browser or `debug cli on` output. Disable debug output after each CLI capture. Preserve paths unchanged. Record explicit payload fields separately from retrieved defaults.
+6. For list fields, capture before/after state for one multi-member `action=set` and repeated one-member `action=set` calls. Record merge, replacement, append, duplicate, normalization, and ordering outcomes without inference.
+7. Load the saved candidate snapshot. Compare normalized candidate state with the pre-capture state. Stop with `RESTORE_UNVERIFIED` on mismatch. Do not delete the snapshot; record `NOT_ATTEMPTED_UNDOCUMENTED`.
+8. Redact hostname, serial, management IP, API key, username, MAC addresses, and real interface addresses. Mark a record `DEVICE_CAPTURED` only after review confirms PAN-OS 11.1.x, exact XPath/XML, response, method, and sanitization.
+
+Allowed experiments: `address`, `address-group`, `service`, `service-group`, `security-rule`, `static-route`, and `list-semantics`. The helper has no arbitrary XML mode, API client, retry, commit, move, deployment, Panorama, NAT, or PAN-OS 12.1 path.
+
 ## Official PAN-OS 11.1 references
 
 - `PANOS-11.1-MANAGE-BACKUPS`: [Manage Configuration Backups](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-admin/firewall-administration/manage-configuration-backups)

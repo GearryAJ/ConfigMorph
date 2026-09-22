@@ -39,3 +39,6 @@ Thumbs.db
 
 migration-review-package.zip
 candidate-*.set
+
+# Local PAN-OS lab captures require manual sanitization and review.
+evidence/pan11_1_lab/
