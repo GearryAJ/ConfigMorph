@@ -8,6 +8,7 @@ from app.config import settings
 from app.core.models import FirewallConfig, Severity, Vendor
 from app.core.analysis import AnalysisEngine
 from app.core.graph import GraphScope, GraphSummary, serialize_graph, resolve_node
+from app.core.hardware_migration import HardwareMigrationAnalyzer, load_hardware_catalog
 from app.core.parsing import detect_vendor, parse_config
 from app.persistence.repositories import create_project
 from app.persistence.repositories.projects import get_project
@@ -21,8 +22,12 @@ from app.core.pan_lab import PanLabValidationResult
 
 router = APIRouter(prefix="/api")
 
+@router.get("/hardware/paloalto/models")
+def paloalto_hardware_models():
+    return load_hardware_catalog()
+
 @router.post("/analyze", response_class=HTMLResponse)
-def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_vendor: str = Form(...), source_version: str|None = Form(None), target_version: str|None = Form(None)):
+def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_vendor: str = Form(...), source_version: str|None = Form(None), target_version: str|None = Form(None), source_hardware: str|None = Form(None), target_hardware: str|None = Form(None)):
     size = len(source.encode("utf-8"))
     if size > settings.max_input_bytes: raise HTTPException(413, "Configuration exceeds 5 MiB limit")
     if target_vendor not in {Vendor.PALO_ALTO.value, Vendor.FORTIGATE.value}: raise HTTPException(400, "Unsupported target vendor")
@@ -32,7 +37,15 @@ def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_v
     if vendor is Vendor.UNKNOWN: raise HTTPException(422, "Vendor confidence too low; select source vendor manually")
     try: migration_pair(vendor,target_vendor)
     except ValueError: raise HTTPException(422,"Unsupported migration pair")
+    catalog=load_hardware_catalog()
+    if vendor is Vendor.PALO_ALTO and (not source_hardware or not target_hardware): raise HTTPException(422,"Palo Alto model-to-model migration requires source and target hardware")
+    try:
+        source_model=catalog.find(source_hardware).model if vendor is Vendor.PALO_ALTO and source_hardware else None
+        target_model=catalog.find(target_hardware).model if target_hardware else None
+    except ValueError as exc: raise HTTPException(422,str(exc)) from exc
     cfg = parse_config(source, vendor)
+    if source_model: cfg.metadata["source_hardware"]=source_model
+    if target_model: cfg.metadata["target_hardware"]=target_model
     report, graph = AnalysisEngine().analyze(cfg)
     project = str(uuid4()); root = (settings.workspace_dir / project).resolve(); base = settings.workspace_dir.resolve()
     if base not in root.parents: raise HTTPException(400, "Invalid workspace path")
@@ -42,13 +55,15 @@ def analyze(source: str = Form(...), source_vendor: str = Form("auto"), target_v
     (root / "analysis.json").write_text(report.model_dump_json(indent=2), encoding="utf-8")
     versions={"source":resolve_context(source,vendor,source_version).model_dump(mode="json"),"target":resolve_context("",Vendor.PALO_ALTO,target_version).model_dump(mode="json")}
     (root/"versions.json").write_text(json.dumps(versions,indent=2),encoding="utf-8")
+    if source_model or target_model:
+        (root/"hardware-selection.json").write_text(json.dumps({"source_model":source_model,"target_model":target_model},indent=2),encoding="utf-8")
     create_project(project, vendor.value, target_vendor, str(Path(project) / "source.cfg"), len(cfg.warnings))
     critical = sum(x.severity is Severity.ERROR for x in cfg.warnings)
     summary = {"policies": len(cfg.security_policies), "objects": len(cfg.addresses)+len(cfg.address_groups)+len(cfg.services)+len(cfg.service_groups), "nat": len(cfg.nat_policies), "interfaces": len(cfg.interfaces), "routes": len(cfg.static_routes), "issues": len(cfg.warnings), "findings": report.counts.total_findings}
     safe_summary = json.dumps(summary)
-    message = "Manual review recommended — critical parse errors." if critical else "Parsed with warnings — manual review recommended." if cfg.warnings else "Parsed successfully."
+    message = "Manual review recommended: critical parse errors." if critical else "Parsed with warnings: manual review recommended." if cfg.warnings else "Parsed successfully."
     analysis_cards={"unused":report.counts.unused_objects,"duplicates":report.counts.duplicate_objects,"unresolved":report.counts.unresolved_references,"broad rules":report.counts.broad_rules,"potential shadowing":report.counts.potential_shadowing}
-    findings="".join(f'<li><b>{x.type}</b> — {escape(x.primary_object_name)}: {escape(x.description)} <small>{x.severity}/{x.confidence}</small></li>' for x in report.findings[:100]) or "<li>No findings.</li>"
+    findings="".join(f'<li><b>{x.type}</b>: {escape(x.primary_object_name)}: {escape(x.description)} <small>{x.severity}/{x.confidence}</small></li>' for x in report.findings[:100]) or "<li>No findings.</li>"
     return f'<section class="results" data-project="{project}" data-summary=\'{safe_summary}\'><h2>Analysis complete</h2><p><strong>{vendor.value}</strong> detected ({detected.confidence:.0%} confidence).</p><div class="cards">' + "".join(f'<article><b>{v}</b><span>{k.title()}</span></article>' for k,v in summary.items()) + f'</div><p class="notice">{message}</p><h3>Analysis Findings</h3><div class="cards compact">'+"".join(f'<article><b>{v}</b><span>{k.title()}</span></article>' for k,v in analysis_cards.items())+f'</div><details><summary>Findings ({report.counts.total_findings})</summary><ul class="findings">{findings}</ul></details><h3>Impact Analysis</h3><form class="impact-search" data-project="{project}"><label>Search object <input name="object" required></label><button type="submit">Analyze impact</button></form><div class="impact-result" aria-live="polite"></div><p>Dependency graph: {len(graph.nodes)} objects, {len(graph.edges)} edges.</p><p>Project: <code>{project}</code></p></section>'
 
 def _artifacts(project_id:str):
@@ -114,12 +129,38 @@ def _migration(project_id):
     root.mkdir(exist_ok=True)
     path=root/"mappings.json"
     mappings=MigrationMappings.model_validate_json(path.read_text(encoding="utf-8")) if path.is_file() else default_mappings(cfg)
+    if not path.is_file():
+        hardware_plan=_hardware_plan(project_id,required=False)
+        if hardware_plan:
+            suggestions={item.source_interface:item.target_interface for item in hardware_plan.mappings}
+            for item in mappings.interfaces: item.target_interface=suggestions.get(item.source_interface)
     return cfg,mappings,root
 
 def _versions(project_id):
     path=settings.workspace_dir/project_id/"versions.json"
     if not path.is_file(): return None,None
     data=json.loads(path.read_text(encoding="utf-8")); return VersionContext.model_validate(data["source"]),VersionContext.model_validate(data["target"])
+
+def _hardware_plan(project_id:str,required:bool=True):
+    cfg,_=_artifacts(project_id); path=settings.workspace_dir/project_id/"hardware-selection.json"
+    if not path.is_file():
+        if required: raise HTTPException(404,"Hardware migration was not selected for this project")
+        return None
+    selection=json.loads(path.read_text(encoding="utf-8"))
+    if not selection.get("source_model") or not selection.get("target_model"):
+        if required: raise HTTPException(422,"Source and target hardware are required")
+        return None
+    source_version,target_version=_versions(project_id)
+    return HardwareMigrationAnalyzer().analyze(
+        cfg.interfaces,
+        selection["source_model"],
+        selection["target_model"],
+        source_version.selected_version if source_version else None,
+        target_version.selected_version if target_version else None,
+    )
+
+@router.get("/projects/{project_id}/migration/hardware-plan")
+def migration_hardware_plan(project_id:str): return _hardware_plan(project_id)
 
 @router.get("/projects/{project_id}/migration/mappings")
 def migration_mappings(project_id:str): return _migration(project_id)[1]
@@ -128,10 +169,20 @@ def migration_mappings(project_id:str): return _migration(project_id)[1]
 def update_migration_mappings(project_id:str,mappings:MigrationMappings):
     cfg,_,root=_migration(project_id); sources={x.name:x for x in cfg.interfaces}
     if len({x.source_interface for x in mappings.interfaces})!=len(mappings.interfaces) or any(x.source_interface not in sources for x in mappings.interfaces): raise HTTPException(422,"Unknown or duplicate source interface")
+    hardware_plan=_hardware_plan(project_id,required=False)
+    if hardware_plan:
+        targets=[x.target_interface for x in mappings.interfaces if x.target_interface]
+        allowed=set(hardware_plan.target_interfaces)
+        invalid=[target for target in targets if target not in allowed]
+        if invalid: raise HTTPException(422,f"Target interface is unavailable on selected hardware: {', '.join(sorted(set(invalid)))}")
+        if len(targets)!=len(set(targets)): raise HTTPException(422,"Duplicate target interface assignment")
     (root/"mappings.json").write_text(mappings.model_dump_json(indent=2),encoding="utf-8"); return mappings
 
 def _plan(project_id):
     cfg,mappings,root=_migration(project_id); source_version,target_version=_versions(project_id); plan=MigrationPlanner().plan(cfg,mappings,source_version,target_version)
+    hardware_plan=_hardware_plan(project_id,required=False)
+    if hardware_plan and hardware_plan.status=="BLOCKING":
+        plan.blocked.extend(alert.message for alert in hardware_plan.alerts if alert.severity=="BLOCKING")
     (root/"compatibility.json").write_text(json.dumps([x.model_dump(mode="json") for x in plan.compatibility],indent=2),encoding="utf-8")
     return plan,root
 

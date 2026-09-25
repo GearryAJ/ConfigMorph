@@ -236,5 +236,53 @@
     "official_url": "https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-web-interface-help/network/network-virtual-routers/static-routes",
     "verified_at": "2026-09-18",
     "notes": "Target semantic basis for the bounded emitted route fields."
+  },
+  {
+    "id": "PANOS-11.1-INTERFACE-NAMING",
+    "vendor": "paloalto",
+    "product": "PAN-OS",
+    "version_family": "11.1",
+    "document_type": "CLI_REFERENCE",
+    "title": "Find a Command",
+    "topic": "Fixed Ethernet interface names in slot and port form",
+    "official_url": "https://docs.paloaltonetworks.com/ngfw/pan-os-cli-quick-start/get-started-with-the-cli/find-a-command",
+    "verified_at": "2026-09-25",
+    "notes": "The official example shows physical Ethernet interface names such as ethernet1/1. Hardware migration suggestions remain subject to model capacity and engineer review."
+  },
+  {
+    "id": "PAN-HW-PA3400-FRONT-PANEL",
+    "vendor": "paloalto",
+    "product": "PA-3400 Series",
+    "version_family": "hardware",
+    "document_type": "HARDWARE_REFERENCE",
+    "title": "PA-3400 Series Front Panel",
+    "topic": "Physical data-plane port numbering and media groups",
+    "official_url": "https://docs.paloaltonetworks.com/hardware/pa-3400-hardware-reference/pa-3400-series-overview/front-panel-3400-series",
+    "verified_at": "2026-09-25",
+    "notes": "Separates data-plane ports from management, console, HA, and HSCI ports for PA-3400 models."
+  },
+  {
+    "id": "PAN-HW-PA5500-COMPONENTS",
+    "vendor": "paloalto",
+    "product": "PA-5500 Series",
+    "version_family": "hardware",
+    "document_type": "HARDWARE_REFERENCE",
+    "title": "PA-5500 Series Firewall Components",
+    "topic": "Physical data-plane ports, media groups, and breakout-capable ports",
+    "official_url": "https://docs.paloaltonetworks.com/hardware/pa-5500-hardware-reference/pa-5500-series-firewall-overview/pa-5500-series-firewall-components",
+    "verified_at": "2026-09-25",
+    "notes": "Base port capacity is used for suggestions. Breakout mode requires explicit engineer review and is not inferred."
+  },
+  {
+    "id": "PAN-HW-PA5500-SUPPORTED-PANOS",
+    "vendor": "paloalto",
+    "product": "PA-5500 Series",
+    "version_family": "12.1/12.2",
+    "document_type": "HARDWARE_REFERENCE",
+    "title": "PA-5500 Series Firewall Overview",
+    "topic": "First supported PAN-OS releases by PA-5500 model group",
+    "official_url": "https://docs.paloaltonetworks.com/hardware/pa-5500-hardware-reference/pa-5500-series-firewall-overview",
+    "verified_at": "2026-09-25",
+    "notes": "PA-5540 through PA-5580 first support PAN-OS 12.1.2. PA-5510 through PA-5530 first support PAN-OS 12.2.2."
   }
 ]

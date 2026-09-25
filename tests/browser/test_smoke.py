@@ -14,7 +14,7 @@ def test_fortigate_offline_workflow(page,live_server):
     page.on("response",lambda response: failed.append(f"{response.status} {response.url}") if response.status>=400 else None)
     page.goto(live_server)
     assert assets=={"/static/css/app.css":200,"/static/vendor/htmx/htmx.min.js":200,"/static/vendor/cytoscape/cytoscape.min.js":200,"/static/js/app.js":200}
-    page.locator('[name="source_vendor"]').select_option("fortigate"); page.locator('[name="source_version"]').select_option("7.4"); page.locator("#target-version").select_option("11.1")
+    page.locator('[name="source_vendor"]').select_option("fortigate"); page.locator('[name="source_version"]').select_option("7.4"); page.locator("#target-version").select_option("11.1"); page.locator("#target-hardware").select_option("PA-3410")
     page.locator("#file").set_input_files(str(Path("examples/fortigate/basic.conf").resolve()))
     page.wait_for_function("() => document.querySelector('#source').value.length > 0")
     page.get_by_role("button",name="Analyze & Convert").click(); page.locator("#workbench").wait_for()
@@ -62,5 +62,32 @@ def test_fortigate_offline_workflow(page,live_server):
 
 def test_malformed_is_recoverable(page,live_server):
     live_server,_=live_server
-    page.goto(live_server); page.get_by_role("tab",name="Paste").click(); page.locator("#source").fill("not a firewall configuration"); page.get_by_role("button",name="Analyze & Convert").click()
+    page.goto(live_server); page.locator("#target-hardware").select_option("PA-3410"); page.get_by_role("tab",name="Paste").click(); page.locator("#source").fill("not a firewall configuration"); page.get_by_role("button",name="Analyze & Convert").click()
     page.wait_for_timeout(300); assert page.locator("#source").input_value()=="not a firewall configuration"
+
+def test_paloalto_model_to_model_hardware_review(page,live_server):
+    live_server,_=live_server
+    errors=[]
+    page.on("console",lambda message: errors.append(f"console {message.type}: {message.text}") if message.type in {"error","warning"} else None)
+    page.on("pageerror",lambda error: errors.append(f"pageerror: {error}"))
+    page.goto(live_server)
+    page.locator('[name="source_vendor"]').select_option("paloalto")
+    page.locator('[name="source_version"]').select_option("11.1")
+    page.locator("#source-hardware").select_option("PA-3410")
+    page.locator("#target-version").select_option("12.1")
+    page.locator("#target-hardware").select_option("PA-5540")
+    page.locator("#file").set_input_files(str(Path("examples/paloalto/basic.xml").resolve()))
+    page.get_by_role("button",name="Analyze & Convert").click()
+    page.locator("#workbench").wait_for()
+    page.get_by_role("tab",name="Migration",exact=True).click()
+    panel=page.locator("#hardware-migration-panel")
+    assert "PA-3410" in panel.inner_text() and "PA-5540" in panel.inner_text()
+    assert "MEDIA REVIEW REQUIRED" in panel.inner_text()
+    assert page.locator('.mapping-row input[name="target_interface"]').evaluate_all("xs=>xs.map(x=>x.value)")==["ethernet1/1","ethernet1/2"]
+    assert not any(page.locator('.mapping-row input[name="confirmed"]').evaluate_all("xs=>xs.map(x=>x.checked)"))
+    page.get_by_role("button",name="Review port media").click()
+    assert page.locator('.mapping-row input[name="target_interface"]').first.evaluate("el=>document.activeElement===el")
+    page.set_viewport_size({"width":390,"height":844})
+    assert page.get_by_role("button",name="Review port media").evaluate("el=>el.getBoundingClientRect().height")>=44
+    assert page.evaluate("document.documentElement.scrollWidth<=document.documentElement.clientWidth")
+    assert not errors,errors

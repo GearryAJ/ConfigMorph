@@ -12,9 +12,19 @@ The sticky source/target context remains visible across post-analysis views. Gen
 
 `vendor parser → FirewallConfig IR → compatibility/planner → confirmed mappings → PAN command DTOs → serializer → candidate/report`
 
-Migration code consumes normalized IR only. It does not parse source syntax. A central pair registry selects the Cisco ASA or FortiGate source adapter and the single PAN-OS renderer. Every normalized entity receives one `EXACT`, `SUPPORTED`, `PARTIAL`, `MANUAL_REVIEW`, or `UNSUPPORTED` compatibility record. Omitted entities therefore remain visible in the report.
+Migration code consumes normalized IR only. It does not parse source syntax. A central pair registry selects the Cisco ASA, FortiGate, or Palo Alto source adapter and the single PAN-OS renderer. Every normalized entity receives one `EXACT`, `SUPPORTED`, `PARTIAL`, `MANUAL_REVIEW`, or `UNSUPPORTED` compatibility record. Omitted entities therefore remain visible in the report.
 
 FortiGate scope and limitations are documented in [fortigate-to-pan.md](fortigate-to-pan.md).
+
+## Palo Alto hardware model migration
+
+Palo Alto to Palo Alto projects require explicit source and target hardware models. The implementation lives in `app/core/hardware_migration/` and reads `references/palo_alto_ngfw_hardware_database.json`. It separates model lookup, hardware-plan models, and interface-capacity analysis from the general migration planner.
+
+The analyzer counts unique physical Ethernet parents, so subinterfaces do not consume additional physical ports. It preserves a numbered port when that port exists on the target, otherwise it assigns the lowest unallocated target port. A target with insufficient fixed capacity produces a blocking `TARGET_CAPACITY_SHORTFALL`. Chassis models with modular capacity produce `TARGET_CAPACITY_NOT_FIXED` and require the installed network-card inventory before mapping.
+
+Generated mappings are suggestions. They remain unconfirmed until an engineer reviews them in the Mapping view. The API rejects target ports outside the selected model and duplicate physical assignments. Port media, optics, cabling, breakout mode, and negotiated speed are not inferred from configuration and always remain review items for different models.
+
+The PA-3400 and PA-5500 capacity behavior is tied to official hardware references recorded as `PAN-HW-PA3400-FRONT-PANEL` and `PAN-HW-PA5500-COMPONENTS`. PAN-OS slot and port naming uses `PANOS-11.1-INTERFACE-NAMING`. The PA-5500 first-supported release check uses `PAN-HW-PA5500-SUPPORTED-PANOS`. Other catalog models remain `HARDWARE_REFERENCE_NOT_VERIFIED` until an official model reference is recorded.
 
 ## ASA to PAN-OS scope
 
@@ -34,7 +44,7 @@ Names deterministically replace unsupported punctuation with `_`, preserve Unico
 
 Generation validates the structured plan plus the emitted subset: recognized context, IP/netmask values, and port syntax. This is application-level syntax validation, **not validation by PAN-OS**. Critical parse errors block all candidate output. Unresolved references and group cycles block affected entities. Potential shadowing remains advisory; policy order is never changed.
 
-Generated files are always **Candidate Configuration — Engineer Review Required**:
+Generated files are always **Candidate Configuration: Engineer Review Required**:
 
 - `migration/candidate-pan-os.set`
 - `migration/migration-report.json`

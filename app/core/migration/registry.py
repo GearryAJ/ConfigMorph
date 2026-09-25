@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 from app.core.models import Vendor
-from .sources import CiscoAsaSourceAdapter, FortiGateSourceAdapter, MigrationSourceAdapter
+from .sources import (
+    CiscoAsaSourceAdapter,
+    FortiGateSourceAdapter,
+    MigrationSourceAdapter,
+    PaloAltoSourceAdapter,
+)
 
 
 @dataclass(frozen=True)
@@ -16,6 +21,7 @@ class MigrationPair:
 SUPPORTED_MIGRATION_PAIRS = {
     (Vendor.ASA, Vendor.PALO_ALTO): MigrationPair(CiscoAsaSourceAdapter, "PaloAltoRenderer", frozenset({"policy", "nat", "route"}), "asa-to-pan", frozenset({"asa-9.20","asa-9.22","asa-9.24"}), frozenset({"panos-11.1","panos-12.1"})),
     (Vendor.FORTIGATE, Vendor.PALO_ALTO): MigrationPair(FortiGateSourceAdapter, "PaloAltoRenderer", frozenset({"policy", "nat", "vip", "route"}), "fortigate-to-pan", frozenset({"fortios-7.4","fortios-7.6"}), frozenset({"panos-11.1","panos-12.1"})),
+    (Vendor.PALO_ALTO, Vendor.PALO_ALTO): MigrationPair(PaloAltoSourceAdapter, "PaloAltoRenderer", frozenset({"policy", "nat", "route", "hardware_interface_mapping"}), "pan-to-pan-hardware", frozenset({"panos-11.1","panos-12.1"}), frozenset({"panos-11.1","panos-12.1"})),
 }
 
 
